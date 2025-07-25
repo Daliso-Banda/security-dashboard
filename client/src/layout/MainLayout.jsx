@@ -9,6 +9,7 @@ const menuItems = [
   { text: 'Access Control', path: '/access' },
   { text: 'Alerts', path: '/alerts' },
   { text: 'Logs', path: '/logs' },
+  { text: 'Face Registration', path: '/registration' },
 ];
 
 export default function MainLayout() {

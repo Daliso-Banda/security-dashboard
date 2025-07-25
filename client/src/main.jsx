@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import Alerts from './pages/Alerts.jsx';
 import AccessControl from './pages/AccessControl.jsx';
 import Logs from './pages/Logs.jsx';
+import FaceRegistration from './pages/faceRegistration.jsx';
 
 import './index.css';
 
@@ -44,6 +45,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             <Route path="alerts" element={<Alerts />} />
             <Route path="access" element={<AccessControl />} />
             <Route path="logs" element={<Logs />} />
+            <Route path="registration" element={<FaceRegistration />} />
           </Route>
         </Routes>
       </BrowserRouter>

@@ -2,18 +2,56 @@ import { useEffect, useState } from 'react';
 import { Box, Typography, Paper, Stack } from '@mui/material';
 import { io } from 'socket.io-client';
 
-export default function Alerts() {
+export default function fetchAlerts() {
   const [alerts, setAlerts] = useState([]);
 
-  useEffect(() => {
-    const socket = io("http://localhost:3000");
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"; 
 
-    socket.on("alert", (data) => {
-      setAlerts(prev => [...prev, data]);
+  useEffect(() => {
+    // --- 1. Fetch existing alerts on component mount ---
+    const fetchAlerts = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/alerts`);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const data = await response.json();
+        if (data.success) {
+          setAlerts(data.alerts);
+        } else {
+          console.error("Failed to fetch initial alerts:", data.error);
+        }
+      } catch (error) {
+        console.error("Error fetching alerts:", error);
+      }
+    };
+
+    fetchAlerts();
+
+    // --- 2. Set up Socket.IO for real-time alerts ---
+    const socket = io(BACKEND_URL); // Connect to the determined backend URL
+
+    socket.on("connect", () => {
+      console.log("Socket.IO connected!");
     });
 
-    return () => socket.disconnect();
-  }, []);
+    socket.on("alert", (data) => {
+      console.log("New alert received via Socket.IO:", data);
+      setAlerts(prev => [data, ...prev]); // Add new alerts to the top
+    });
+
+    socket.on("disconnect", () => {
+      console.log("Socket.IO disconnected.");
+    });
+
+    socket.on("connect_error", (err) => {
+      console.error("Socket.IO connection error:", err.message);
+    });
+
+    return () => {
+      socket.disconnect(); // Clean up on component unmount
+    };
+  }, [BACKEND_URL]); // Add BACKEND_URL to dependency array if it changes
 
   return (
     <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#ebecf1ff' }}>
@@ -25,8 +63,9 @@ export default function Alerts() {
           {alerts.length === 0 ? (
             <Typography variant="body1" color="text.secondary">No alerts yet.</Typography>
           ) : (
-            alerts.map((alert, idx) => (
-              <Box key={idx} sx={{ p: 2, bgcolor: '#fff6f6', borderRadius: 2, boxShadow: 1 }}>
+            // Map alerts, ensure stable key if possible (e.g., alert._id)
+            alerts.map((alert) => ( // Removed idx from here as we're using _id
+              <Box key={alert._id || alert.timestamp} sx={{ p: 2, bgcolor: '#fff6f6', borderRadius: 2, boxShadow: 1 }}>
                 <Typography variant="subtitle1" sx={{ fontWeight: 500, color: '#d35400' }}>{alert.message}</Typography>
                 <Typography variant="caption" color="text.secondary">
                   {new Date(alert.timestamp).toLocaleString()}
