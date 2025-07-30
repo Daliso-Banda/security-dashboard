@@ -8,28 +8,24 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
-  IconButton,
 } from '@mui/material';
-import { PhotoCamera, PlayArrow, CameraAlt } from '@mui/icons-material'; // Added PlayArrow, CameraAlt icons
+import { PlayArrow, CameraAlt } from '@mui/icons-material';
 import axios from 'axios';
 
 export default function FaceRegistration() {
   const [name, setName] = useState('');
-  const [capturedImageBlob, setCapturedImageBlob] = useState(null); // Stores the captured image as a Blob
+  const [capturedImageBlob, setCapturedImageBlob] = useState(null);
   const [loading, setLoading] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('info');
 
-  const videoRef = useRef(null); // Ref for the video element to display webcam feed
-  const canvasRef = useRef(null); // Ref for the canvas element to capture image
-  const [stream, setStream] = useState(null); // Stores the MediaStream from the webcam
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const [stream, setStream] = useState(null);
 
-  // --- Webcam Control Functions ---
-
-  // Function to start the webcam feed
   const startWebcam = async () => {
-    setCapturedImageBlob(null); // Clear any previously captured image
+    setCapturedImageBlob(null);
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
       setStream(mediaStream);
@@ -42,7 +38,6 @@ export default function FaceRegistration() {
     }
   };
 
-  // Function to stop the webcam feed
   const stopWebcam = () => {
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
@@ -50,44 +45,34 @@ export default function FaceRegistration() {
     }
   };
 
-  // Effect hook to start webcam on mount and stop on unmount
   useEffect(() => {
     startWebcam();
     return () => {
-      stopWebcam(); // Cleanup on unmount
+      stopWebcam();
     };
-  }, []); // Empty dependency array means this runs once on mount and cleanup on unmount
+  }, []);
 
-
-  // Function to capture image from webcam
   const handleCapture = () => {
     if (videoRef.current && canvasRef.current) {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
-
-      // Set canvas dimensions to match video feed
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
-
-      // Draw current video frame onto canvas
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      // Get image data as a Blob
       canvas.toBlob((blob) => {
         if (blob) {
-          // Create a File object from the Blob (needed for FormData)
           const capturedFile = new File([blob], `webcam_capture_${Date.now()}.jpeg`, { type: 'image/jpeg' });
           setCapturedImageBlob(capturedFile);
           showSnackbar("Image captured successfully!", "success");
+          stopWebcam();
         } else {
           showSnackbar("Failed to capture image.", "error");
         }
-      }, 'image/jpeg', 0.9); // Image format and quality
+      }, 'image/jpeg', 0.9);
     }
   };
 
-  // --- Snackbar Control Functions ---
   const showSnackbar = (message, severity) => {
     setSnackbarMessage(message);
     setSnackbarSeverity(severity);
@@ -95,13 +80,10 @@ export default function FaceRegistration() {
   };
 
   const handleSnackbarClose = (event, reason) => {
-    if (reason === 'clickaway') {
-      return;
-    }
+    if (reason === 'clickaway') return;
     setSnackbarOpen(false);
   };
 
-  // --- Form Submission Function ---
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -109,7 +91,7 @@ export default function FaceRegistration() {
       showSnackbar("Please enter a name.", "warning");
       return;
     }
-    if (!capturedImageBlob) { // Check for captured image blob
+    if (!capturedImageBlob) {
       showSnackbar("Please capture an image from the webcam.", "warning");
       return;
     }
@@ -119,7 +101,7 @@ export default function FaceRegistration() {
 
     const formData = new FormData();
     formData.append('name', name);
-    formData.append('image', capturedImageBlob); // Use the captured image blob
+    formData.append('image', capturedImageBlob);
 
     try {
       const response = await axios.post('http://localhost:3000/api/register-face', formData, {
@@ -132,8 +114,6 @@ export default function FaceRegistration() {
         showSnackbar(`Successfully registered: ${response.data.registeredName}`, "success");
         setName('');
         setCapturedImageBlob(null);
-        // Restart webcam for next registration
-        stopWebcam();
         startWebcam();
       } else {
         showSnackbar(response.data.message || "Registration failed.", "error");
@@ -148,121 +128,176 @@ export default function FaceRegistration() {
   };
 
   return (
-    <Box sx={{
-      minHeight: '100vh',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      bgcolor: '#232946',
-      backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")',
-      backgroundSize: 'cover'
-    }}>
-      <Box component={Paper} elevation={4} sx={{
-        p: 4,
-        borderRadius: 4,
-        maxWidth: 550, // Slightly wider for video
-        width: '90%',
-        boxShadow: 3,
-        mx: 'auto',
+    <Box
+      sx={{
+        minHeight: '100vh',
+        bgcolor: '#232946',
+        backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")',
+        backgroundSize: 'cover',
         display: 'flex',
-        flexDirection: 'column',
-        gap: 2,
-      }}>
-        <Typography variant="h4" align="center" gutterBottom sx={{ fontWeight: 600, color: '#2d3436', mb: 3 }}>
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 3,
+      }}
+    >
+      <Paper
+        elevation={5}
+        sx={{
+          maxWidth: 600,
+          width: '90%',
+          p: 4,
+          borderRadius: 4,
+          boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 3,
+        }}
+      >
+        <Typography
+          variant="h4"
+          align="center"
+          gutterBottom
+          sx={{ fontWeight: 700, color: 'blue' }}
+        >
           Face Registration
         </Typography>
 
         <form onSubmit={handleSubmit}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              label="Full Name"
-              variant="outlined"
-              fullWidth
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              disabled={loading}
-              required
-            />
+          <TextField
+            label="Full Name"
+            variant="outlined"
+            fullWidth
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={loading}
+            required
+            helperText="Enter the full name of the person to register."
+            sx={{
+              bgcolor: '#fff',
+              borderRadius: 1,
+            }}
+          />
 
-            <Box sx={{ border: '1px solid #ccc', borderRadius: '4px', overflow: 'hidden', mb: 2 }}>
-              {capturedImageBlob ? (
-                // Display captured image preview
-                <Box
-                  component="img"
-                  src={URL.createObjectURL(capturedImageBlob)}
-                  alt="Captured"
-                  sx={{ width: '100%', height: 'auto', display: 'block' }}
-                />
-              ) : (
-                // Display webcam feed
-                <video
-                  ref={videoRef}
-                  autoPlay
-                  playsInline
-                  muted // Mute for no echo
-                  style={{ width: '100%', height: 'auto', display: 'block', backgroundColor: 'black' }}
-                />
-              )}
-            </Box>
-
-            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mb: 2 }}>
-                {!stream && !capturedImageBlob && ( // Show start button if no stream and no captured image
-                    <Button
-                        variant="contained"
-                        onClick={startWebcam}
-                        startIcon={<PlayArrow />}
-                        disabled={loading}
-                    >
-                        Start Webcam
-                    </Button>
-                )}
-                {stream && !capturedImageBlob && ( // Show capture button if stream is active and no image captured
-                    <Button
-                        variant="contained"
-                        onClick={handleCapture}
-                        startIcon={<CameraAlt />}
-                        disabled={loading}
-                    >
-                        Capture Image
-                    </Button>
-                )}
-                {capturedImageBlob && ( // Show retake button if image is captured
-                    <Button
-                        variant="outlined"
-                        onClick={startWebcam} // Restart webcam to retake
-                        startIcon={<PlayArrow />}
-                        disabled={loading}
-                    >
-                        Retake
-                    </Button>
-                )}
-            </Box>
-
-            {/* Hidden canvas for image capture */}
-            <canvas ref={canvasRef} style={{ display: 'none' }} />
-
-            <Button
-              type="submit"
-              variant="contained"
-              color="primary"
-              fullWidth
-              disabled={loading || !capturedImageBlob} // Disable if no image captured
-              sx={{ mt: 2 }}
-            >
-              {loading ? <CircularProgress size={24} color="inherit" /> : "Register Face"}
-            </Button>
+          <Box
+            sx={{
+              mt: 2,
+              borderRadius: 3,
+              overflow: 'hidden',
+              border: '2px solid #4c5c68',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+              maxHeight: 360,
+              position: 'relative',
+            }}
+          >
+            {capturedImageBlob ? (
+              <Box
+                component="img"
+                src={URL.createObjectURL(capturedImageBlob)}
+                alt={`Captured image of ${name || 'user'}`}
+                sx={{ width: '100%', height: 'auto', display: 'block' }}
+              />
+            ) : (
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                style={{ width: '100%', height: 'auto', backgroundColor: 'black' }}
+              />
+            )}
           </Box>
-        </form>
-      </Box>
 
-      {/* Snackbar for feedback */}
+          <Box
+            sx={{
+              mt: 2,
+              display: 'flex',
+              justifyContent: 'center',
+              gap: 2,
+              flexWrap: 'wrap',
+            }}
+          >
+            {!stream && !capturedImageBlob && (
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={startWebcam}
+                startIcon={<PlayArrow />}
+                disabled={loading}
+                sx={{
+                  px: 4,
+                  fontWeight: 600,
+                  ':hover': { bgcolor: '#1e88e5' },
+                }}
+              >
+                Start Webcam
+              </Button>
+            )}
+
+            {stream && !capturedImageBlob && (
+              <Button
+                variant="contained"
+                color="secondary"
+                onClick={handleCapture}
+                startIcon={<CameraAlt />}
+                disabled={loading}
+                sx={{
+                  px: 4,
+                  fontWeight: 600,
+                  ':hover': { bgcolor: '#d32f2f' },
+                }}
+              >
+                Capture Image
+              </Button>
+            )}
+
+            {capturedImageBlob && (
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setCapturedImageBlob(null);
+                  startWebcam();
+                }}
+                startIcon={<PlayArrow />}
+                disabled={loading}
+                sx={{
+                  px: 4,
+                  fontWeight: 600,
+                  color: '#f5f6fa',
+                  borderColor: '#7f8c8d',
+                  ':hover': { borderColor: '#95a5a6', color: '#ecf0f1' },
+                }}
+              >
+                Retake
+              </Button>
+            )}
+          </Box>
+
+          <canvas ref={canvasRef} style={{ display: 'none' }} />
+
+          <Button
+            type="submit"
+            variant="contained"
+            color="success"
+            fullWidth
+            disabled={loading || !capturedImageBlob || !name.trim()}
+            sx={{ mt: 3, fontWeight: 700 }}
+          >
+            {loading ? <CircularProgress size={24} color="inherit" /> : "Register Face"}
+          </Button>
+        </form>
+      </Paper>
+
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={handleSnackbarClose}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+        <Alert
+          onClose={handleSnackbarClose}
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
           {snackbarMessage}
         </Alert>
       </Snackbar>

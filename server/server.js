@@ -10,6 +10,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process'); // Import spawn from child_process
+// Serves uploaded images statically
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // --- END NEW IMPORTS ---
 
 // --- CORS Middleware for Express HTTP requests ---
@@ -59,8 +62,10 @@ const registeredUserSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
   face_encoding: String, // Stored as Base64 string from Python
   image_data: Buffer,    // Store original binary image data as Buffer
-  image_filename: String
+  image_path: String,
+  privilege: { type: String, default: "user" }
 });
+
 // Explicitly name the collection 'registered_users' to match previous Python behavior
 const RegisteredUser = mongoose.model('RegisteredUser', registeredUserSchema, 'registered_users');
 // --- END NEW: RegisteredUser Model ---
@@ -154,6 +159,52 @@ app.get('/api/alerts', async (req, res) => {
   }
 });
 
+//view users 
+// 🔄 UPDATED: View registered users with full image URLs
+app.get('/api/registered-users', async (req, res) => {
+  try {
+    const users = await RegisteredUser.find({});
+    const formattedUsers = users.map(user => ({
+      _id: user._id,
+      name: user.name,
+      timestamp: user.timestamp,
+      image_url: user.image_path
+        ? `http://localhost:${PORT}/uploads/${user.image_path}`
+        : null
+    }));
+    res.status(200).json({ users: formattedUsers });
+  } catch (error) {
+    console.error('Error fetching registered users:', error);
+    res.status(500).json({ message: 'Error fetching users' });
+  }
+});
+
+
+// Update user privilege
+app.patch('/api/registered-users/:id', async (req, res) => {
+  const { privilege } = req.body;
+  try {
+    const updated = await RegisteredUser.findByIdAndUpdate(req.params.id, { privilege }, { new: true });
+    res.json({ success: true, user: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Delete user
+app.delete('/api/registered-users/:id', async (req, res) => {
+  try {
+    await RegisteredUser.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+
+
+
+
 // READ All Login Logs
 app.get('/api/logs', async (req, res) => {
   try {
@@ -182,22 +233,25 @@ app.get('/api/logs', async (req, res) => {
 // --- NEW: Face Registration Endpoint ---
 app.post('/api/register-face', upload.single('image'), async (req, res) => {
   const name = req.body.name;
-  const imagePath = req.file ? req.file.path : null; // Path to the temporarily saved image
+  const imagePath = req.file ? req.file.path : null; // Path to the saved image in uploads/
 
-  // Flag to ensure only one response is sent per request
   let responseSent = false;
 
   if (!name || !imagePath) {
-    if (imagePath) { // Clean up if a file was uploaded but name is missing
+    if (imagePath) { // Clean up if name missing but image uploaded
       fs.unlink(imagePath, (err) => {
         if (err) console.error(`❌ Error deleting incomplete file ${imagePath}:`, err);
       });
     }
-    responseSent = true; // Mark as true since we are sending a response here
+    responseSent = true;
     return res.status(400).json({ success: false, message: 'Name and image file are required.' });
   }
 
+<<<<<<< HEAD
   const pythonExecutable = process.env.PYTHON_EXECUTABLE /* || 'python3' **/ ;
+=======
+  const pythonExecutable = process.env.PYTHON_EXECUTABLE || 'python';
+>>>>>>> 02a6208174c972b310d5948876a61a2d4b9b3fd1
   const pythonScriptPath = path.join(__dirname, 'register_user.py');
 
   console.log(`Executing Python script: ${pythonScriptPath} with image: ${imagePath} and name: ${name}`);
@@ -216,28 +270,19 @@ app.post('/api/register-face', upload.single('image'), async (req, res) => {
   });
 
   pythonProcess.on('close', async (code) => {
-    // --- IMPORTANT: Clean up the temporary image file ---
-    if (fs.existsSync(imagePath)) {
-      fs.unlink(imagePath, (err) => {
-        if (err) console.error(`❌ Error deleting temporary file ${imagePath}:`, err);
-        else console.log(`✅ Temporary file deleted: ${imagePath}`);
-      });
-    }
+    // IMPORTANT: Do NOT delete the uploaded image here — keep it permanently in uploads
 
-    // If a response has already been sent (e.g., by an 'error' event), do nothing
     if (responseSent) return;
 
     try {
-      const pythonResult = JSON.parse(pythonStdout); // Attempt to parse Python's JSON output
+      const pythonResult = JSON.parse(pythonStdout);
 
       if (pythonResult.success) {
-        // --- Node.js now handles MongoDB insertion ---
         const { name, face_encoding, image_binary_base64 } = pythonResult.data;
 
-        // Convert base64 image_binary_base64 back to Buffer for storage if included
         let imageBuffer = null;
         if (image_binary_base64) {
-            imageBuffer = Buffer.from(image_binary_base64, 'base64');
+          imageBuffer = Buffer.from(image_binary_base64, 'base64');
         }
 
         try {
@@ -245,8 +290,8 @@ app.post('/api/register-face', upload.single('image'), async (req, res) => {
             name: name,
             timestamp: new Date(),
             face_encoding: face_encoding,
-            image_data: imageBuffer, // Use the buffer if available
-            image_filename: path.basename(imagePath)
+            image_data: imageBuffer,
+            image_path: path.basename(imagePath)  // Save filename for permanent storage reference
           });
 
           console.log(`✅ ${name} registered successfully in MongoDB.`);
@@ -260,36 +305,35 @@ app.post('/api/register-face', upload.single('image'), async (req, res) => {
         }
 
       } else {
-        // Python script explicitly reported a failure (e.g., no face found, image processing error)
         console.warn('Python script reported failure:', pythonResult.message);
         res.status(400).json({ success: false, message: pythonResult.message });
         responseSent = true;
       }
 
     } catch (parseError) {
-      // Failed to parse Python's output as JSON, indicates a Python script error or unexpected output
       console.error(`❌ Error parsing Python script output as JSON: ${parseError.message}`);
-      console.error('Python stdout (raw):', pythonStdout); // Log raw stdout for debugging
-      console.error('Python stderr (raw):', pythonStderr); // Log raw stderr for debugging
+      console.error('Python stdout (raw):', pythonStdout);
+      console.error('Python stderr (raw):', pythonStderr);
       res.status(500).json({ success: false, message: `Internal server error during processing: ${pythonStderr.trim() || 'Invalid Python output.'}` });
       responseSent = true;
     }
   });
 
   pythonProcess.on('error', (err) => {
-    // This handles errors like Python executable not found or permissions issues
     console.error('❌ Failed to start Python child process:', err);
+    // Clean up uploaded file if python process fails to start
     if (imagePath && fs.existsSync(imagePath)) {
       fs.unlink(imagePath, (unlinkErr) => {
         if (unlinkErr) console.error(`❌ Error deleting temporary file ${imagePath} after Python process error:`, unlinkErr);
       });
     }
-    if (!responseSent) { // Only send response if not already sent by 'close' event
+    if (!responseSent) {
       res.status(500).json({ success: false, message: `Failed to execute registration script: ${err.message}` });
       responseSent = true;
     }
   });
 });
+
 // --- END NEW: Face Registration Endpoint ---
 
 

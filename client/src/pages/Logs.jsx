@@ -10,88 +10,133 @@ import {
   Paper,
   TableContainer,
   CircularProgress,
+  Chip,
 } from '@mui/material';
 import axios from 'axios';
+
+// Severity chip colors
+const severityColors = {
+  High: 'error',
+  Medium: 'warning',
+  Low: 'success',
+};
 
 export default function Logs() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null); // Added state for error handling
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Correct the API endpoint to match your Node.js server's port
     axios.get('http://localhost:3000/api/logs')
       .then((res) => {
-        // Access res.data.logs as per your Node.js API response structure
         if (res.data && Array.isArray(res.data.logs)) {
           setLogs(res.data.logs);
         } else {
+          setLogs([]);
           console.warn("Unexpected data format for logs:", res.data);
-          setLogs([]); // Ensure logs is an empty array if data format is unexpected
         }
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching logs:", err);
-        setError("Failed to fetch logs. Please try again later."); // Set an error message
+        setError("Failed to fetch logs. Please try again later.");
         setLoading(false);
+        console.error("Error fetching logs:", err);
       });
   }, []);
 
-  // Function to determine severity based on the log message
   const getSeverity = (message) => {
-    if (message.toLowerCase().includes('unknown person')) {
-      return 'High'; // Or a specific warning color
-    }
-    return 'Low'; // Or a default color for known entries
+    const msg = message.toLowerCase();
+    if (msg.includes('unknown person')) return 'High';
+    if (msg.includes('attempted')) return 'Medium';
+    return 'Low';
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: '#232946', backgroundImage: 'url("https://www.transparenttextures.com/patterns/cubes.png")', backgroundSize: 'cover' }}>
-      <Box component={Paper} elevation={4} sx={{ p: 4, borderRadius: 4, maxWidth: 1100, width: '90%', boxShadow: 3, mx: 'auto' }}>
-        <Typography variant="h4" align="left" gutterBottom sx={{ fontWeight: 600, color: '#2d3436', mb: 3 }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        bgcolor: '#f0f2f5',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        p: 3,
+      }}
+    >
+      <Paper
+        elevation={8}
+        sx={{
+          maxWidth: 1100,
+          width: '95%',
+          borderRadius: 4,
+          p: 4,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+        }}
+      >
+        <Typography
+          variant="h4"
+          sx={{ fontWeight: 700, color: '#34495e', mb: 4 }}
+          align="left"
+        >
           Historical Security Logs
         </Typography>
 
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
             <CircularProgress />
           </Box>
-        ) : error ? ( // Display error message if there's an error
-            <Typography color="error" align="center" variant="h6">
-              {error}
-            </Typography>
+        ) : error ? (
+          <Typography color="error" align="center" variant="h6">
+            {error}
+          </Typography>
         ) : (
-          <TableContainer component={Paper} sx={{ mt: 2, maxHeight: 600, overflow: 'auto' }}> {/* Added Paper component and max height for scroll */}
-            <Table stickyHeader aria-label="logs table"> {/* stickyHeader for better UX with scrolling */}
+          <TableContainer sx={{ maxHeight: 600 }}>
+            <Table stickyHeader aria-label="logs table" sx={{ minWidth: 650 }}>
               <TableHead>
-                <TableRow>
+                <TableRow sx={{ bgcolor: '#ecf0f1' }}>
                   <TableCell><strong>Message</strong></TableCell>
                   <TableCell><strong>Device</strong></TableCell>
-                  <TableCell><strong>Severity</strong></TableCell> {/* Severity column remains */}
+                  <TableCell><strong>Severity</strong></TableCell>
                   <TableCell><strong>Timestamp</strong></TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {logs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} align="center">No logs found.</TableCell>
+                    <TableCell colSpan={4} align="center" sx={{ py: 5 }}>
+                      No logs found.
+                    </TableCell>
                   </TableRow>
                 ) : (
-                  logs.map((log) => (
-                    <TableRow key={log._id}> {/* Changed key to log._id */}
-                      <TableCell>{log.message}</TableCell>
-                      <TableCell>{log.device}</TableCell>
-                      <TableCell>{getSeverity(log.message)}</TableCell> {/* Dynamically determine severity */}
-                      <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
-                    </TableRow>
-                  ))
+                  logs.map((log) => {
+                    const severity = getSeverity(log.message);
+                    return (
+                      <TableRow
+                        key={log._id}
+                        hover
+                        sx={{ cursor: 'default' }}
+                      >
+                        <TableCell>{log.message}</TableCell>
+                        <TableCell>{log.device}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={severity}
+                            color={severityColors[severity]}
+                            size="small"
+                            sx={{ fontWeight: 'bold' }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {new Date(log.timestamp).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>
           </TableContainer>
         )}
-      </Box>
+      </Paper>
     </Box>
   );
 }
