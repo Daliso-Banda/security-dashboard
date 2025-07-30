@@ -197,7 +197,7 @@ app.post('/api/register-face', upload.single('image'), async (req, res) => {
     return res.status(400).json({ success: false, message: 'Name and image file are required.' });
   }
 
-  const pythonExecutable = process.env.PYTHON_EXECUTABLE || 'python3';
+  const pythonExecutable = process.env.PYTHON_EXECUTABLE /* || 'python3' **/ ;
   const pythonScriptPath = path.join(__dirname, 'register_user.py');
 
   console.log(`Executing Python script: ${pythonScriptPath} with image: ${imagePath} and name: ${name}`);
