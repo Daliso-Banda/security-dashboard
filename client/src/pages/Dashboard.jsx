@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Grid, Paper, Typography } from '@mui/material';
+import { Grid, Typography } from '@mui/material';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import FaceIcon from '@mui/icons-material/Face';
@@ -44,68 +44,68 @@ export default function Dashboard() {
   ];
 
   return (
-    <Box
-      sx={{
+    <div
+      style={{
         minHeight: '100vh',
-        bgcolor: '#f5f7fa', // light subtle background for the whole page
+        backgroundColor: '#f5f7fa',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'flex-start',
-        py: 6,
-        px: 2,
+        padding: '48px 16px',
       }}
     >
-      {/* Container with background and padding fitting the content */}
-      <Paper
-        elevation={6}
-        sx={{
-          p: 5,
+      <main
+        style={{
           maxWidth: 1100,
           width: '100%',
-          borderRadius: 3,
-          bgcolor: '#ffffff', // white background inside paper
-          boxShadow: '0 8px 30px rgba(0,0,0,0.12)',
+          padding: 40,
+          borderRadius: 12,
+          // no background or shadow, fully transparent
         }}
       >
         <Typography variant="h3" gutterBottom>
           Security Dashboard
         </Typography>
 
-        <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
+        <Typography variant="h5" gutterBottom style={{ marginTop: 32 }}>
           Quick Navigation
         </Typography>
 
-        <Grid container spacing={3} sx={{ mt: 2 }}>
+        <Grid container spacing={3} style={{ marginTop: 16 }}>
           {pages.map((page) => (
             <Grid item xs={12} sm={6} md={4} key={page.title}>
-              <Paper
+              <div
                 onClick={() => navigate(page.path)}
-                sx={{
-                  p: 3,
+                style={{
+                  padding: 24,
                   cursor: 'pointer',
                   backgroundColor: page.color,
                   color: '#fff',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  borderRadius: 2,
+                  borderRadius: 8,
                   transition: 'transform 0.3s ease',
-                  '&:hover': {
-                    transform: 'scale(1.05)',
-                    boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
-                  },
+                  userSelect: 'none',
                 }}
-                elevation={4}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
               >
                 {page.icon}
-                <Typography variant="h6" sx={{ mt: 1 }}>
+                <Typography variant="h6" style={{ marginTop: 8 }}>
                   {page.title}
                 </Typography>
-              </Paper>
+              </div>
             </Grid>
           ))}
         </Grid>
-      </Paper>
-    </Box>
+      </main>
+    </div>
   );
 }
