@@ -14,6 +14,7 @@ import {
 import PersonIcon from "@mui/icons-material/Person";
 import BadgeIcon from "@mui/icons-material/Badge";
 import Webcam from "react-webcam";
+import { motion } from "framer-motion";
 
 const Register = () => {
   const theme = useTheme();
@@ -77,133 +78,139 @@ const Register = () => {
 
   return (
     <Container maxWidth="md" sx={{ py: 6 }}>
-      <Paper elevation={3} sx={{ p: 5 }}>
-        <Typography
-          variant="h4"
-          align="center"
-          gutterBottom
-          sx={{ fontWeight: "bold" }}
-        >
-          👤 Register New User
-        </Typography>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7 }}
+      >
+        <Paper elevation={3} sx={{ p: 5 }}>
+          <Typography
+            variant="h4"
+            align="center"
+            gutterBottom
+            sx={{ fontWeight: "bold" }}
+          >
+            👤 Register New User
+          </Typography>
 
-        {/* Input Fields */}
-        <Grid container spacing={2} sx={{ mt: 2 }}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="Full Name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <PersonIcon color="action" />
-                  </InputAdornment>
-                ),
-              }}
-            />
+          {/* Input Fields */}
+          <Grid container spacing={2} sx={{ mt: 2 }}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="Full Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <PersonIcon color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <TextField
+                label="User ID / Phone"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+                fullWidth
+                variant="outlined"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <BadgeIcon color="action" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
-            <TextField
-              label="User ID / Phone"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-              fullWidth
-              variant="outlined"
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <BadgeIcon color="action" />
-                  </InputAdornment>
-                ),
-              }}
-            />
-          </Grid>
-        </Grid>
+          <Divider sx={{ my: 4 }} />
 
-        <Divider sx={{ my: 4 }} />
+          {/* Webcam and Captured Image */}
+          <Typography
+            variant="h6"
+            align="center"
+            gutterBottom
+            sx={{ fontWeight: 500 }}
+          >
+            Live Camera Feed
+          </Typography>
 
-        {/* Webcam and Captured Image */}
-        <Typography
-          variant="h6"
-          align="center"
-          gutterBottom
-          sx={{ fontWeight: 500 }}
-        >
-          Live Camera Feed
-        </Typography>
-
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            justifyContent: "center",
-            alignItems: "center",
-            gap: 4,
-          }}
-        >
-          <Webcam
-            audio={false}
-            height={360}
-            ref={webcamRef}
-            screenshotFormat="image/png"
-            width={480}
-            videoConstraints={videoConstraints}
-            style={{
-              borderRadius: 12,
-              boxShadow: theme.shadows[2],
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              justifyContent: "center",
+              alignItems: "center",
+              gap: 4,
             }}
-          />
-
-          {capturedImageBlob && (
-            <img
-              src={URL.createObjectURL(capturedImageBlob)}
-              alt="Captured"
+          >
+            <Webcam
+              audio={false}
+              height={360}
+              ref={webcamRef}
+              screenshotFormat="image/png"
+              width={480}
+              videoConstraints={videoConstraints}
               style={{
-                width: 240,
-                height: 180,
-                objectFit: "cover",
                 borderRadius: 12,
-                boxShadow: theme.shadows[3],
+                boxShadow: theme.shadows[2],
               }}
             />
-          )}
-        </Box>
 
-        {/* Buttons */}
-        <Box
-          sx={{
-            mt: 5,
-            display: "flex",
-            justifyContent: "center",
-            gap: 3,
-            flexWrap: "wrap",
-          }}
-        >
-          <Button
-            variant="contained"
-            color="secondary"
-            size="large"
-            onClick={handleCapture}
-            sx={{ borderRadius: 2, px: 4 }}
-          >
-            📸 Capture Photo
-          </Button>
+            {capturedImageBlob && (
+              <img
+                src={URL.createObjectURL(capturedImageBlob)}
+                alt="Captured"
+                style={{
+                  width: 240,
+                  height: 180,
+                  objectFit: "cover",
+                  borderRadius: 12,
+                  boxShadow: theme.shadows[3],
+                }}
+              />
+            )}
+          </Box>
 
-          <Button
-            variant="contained"
-            color="primary"
-            size="large"
-            onClick={handleSubmit}
-            sx={{ borderRadius: 2, px: 4 }}
+          {/* Buttons */}
+          <Box
+            sx={{
+              mt: 5,
+              display: "flex",
+              justifyContent: "center",
+              gap: 3,
+              flexWrap: "wrap",
+            }}
           >
-            💾 Register Face
-          </Button>
-        </Box>
-      </Paper>
+            <Button
+              variant="contained"
+              color="secondary"
+              size="large"
+              onClick={handleCapture}
+              sx={{ borderRadius: 2, px: 4 }}
+            >
+              Capture Photo
+            </Button>
+
+            <Button
+              variant="contained"
+              color="primary"
+              size="large"
+              onClick={handleSubmit}
+              sx={{ borderRadius: 2, px: 4 }}
+            >
+              Register Face
+            </Button>
+          </Box>
+        </Paper>
+      </motion.div>
     </Container>
   );
 };

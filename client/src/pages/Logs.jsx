@@ -40,8 +40,8 @@ export default function Logs() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [fadeIn, setFadeIn] = useState(false); // New state for transition
 
-  // State for modal dialog
   const [selectedLog, setSelectedLog] = useState(null);
 
   useEffect(() => {
@@ -59,6 +59,10 @@ export default function Logs() {
         setLoading(false);
         console.error("Error fetching logs:", err);
       });
+
+    // Trigger fade-in animation
+    const timer = setTimeout(() => setFadeIn(true), 100);
+    return () => clearTimeout(timer);
   }, []);
 
   const getSeverity = (message) => {
@@ -68,12 +72,10 @@ export default function Logs() {
     return 'Low';
   };
 
-  // Open modal with clicked log details
   const handleRowClick = (log) => {
     setSelectedLog(log);
   };
 
-  // Close modal
   const handleClose = () => {
     setSelectedLog(null);
   };
@@ -89,168 +91,170 @@ export default function Logs() {
         p: { xs: 2, md: 4 },
       }}
     >
-      <Paper
-        elevation={6}
-        sx={{
-          width: '100%',
-          maxWidth: 1300,
-          p: { xs: 3, md: 5 },
-          borderRadius: 4,
-          boxShadow: '0px 6px 20px rgba(0,0,0,0.1)',
-        }}
-      >
-        <Typography
-          variant="h4"
-          gutterBottom
+      <Fade in={fadeIn} timeout={800}>
+        <Paper
+          elevation={6}
           sx={{
-            fontWeight: 600,
-            color: '#2c3e50',
-            mb: 4,
-            textAlign: 'center',
+            width: '100%',
+            maxWidth: 1300,
+            p: { xs: 3, md: 5 },
+            borderRadius: 4,
+            boxShadow: '0px 6px 20px rgba(0,0,0,0.1)',
           }}
         >
-          Security Activity Logs
-        </Typography>
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{
+              fontWeight: 600,
+              color: '#2c3e50',
+              mb: 4,
+              textAlign: 'center',
+            }}
+          >
+            Security Activity Logs
+          </Typography>
 
-        {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
-            <CircularProgress size={50} />
-          </Box>
-        ) : error ? (
-          <Fade in={true}>
-            <Alert severity="error" sx={{ my: 4 }}>
-              {error}
-            </Alert>
-          </Fade>
-        ) : (
-          <Fade in={true}>
-            <TableContainer sx={{ maxHeight: 600 }}>
-              <Table stickyHeader aria-label="logs table">
-                <TableHead>
-                  <TableRow sx={{ bgcolor: '#ecf0f1' }}>
-                    <TableCell><strong>Message</strong></TableCell>
-                    <TableCell><strong>Device</strong></TableCell>
-                    <TableCell><strong>Severity</strong></TableCell>
-                    <TableCell><strong>Timestamp</strong></TableCell>
-                    <TableCell><strong>Image</strong></TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {logs.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
-                        <Typography variant="h6" color="text.secondary">
-                          No logs available.
-                        </Typography>
-                      </TableCell>
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
+              <CircularProgress size={50} />
+            </Box>
+          ) : error ? (
+            <Fade in={true}>
+              <Alert severity="error" sx={{ my: 4 }}>
+                {error}
+              </Alert>
+            </Fade>
+          ) : (
+            <Fade in={true}>
+              <TableContainer sx={{ maxHeight: 600 }}>
+                <Table stickyHeader aria-label="logs table">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#ecf0f1' }}>
+                      <TableCell><strong>Message</strong></TableCell>
+                      <TableCell><strong>Device</strong></TableCell>
+                      <TableCell><strong>Severity</strong></TableCell>
+                      <TableCell><strong>Timestamp</strong></TableCell>
+                      <TableCell><strong>Image</strong></TableCell>
                     </TableRow>
-                  ) : (
-                    logs.map((log) => {
-                      const severity = getSeverity(log.message);
-                      return (
-                        <TableRow
-                          key={log._id}
-                          hover
-                          onClick={() => handleRowClick(log)}
-                          sx={{
-                            cursor: 'pointer',
-                            transition: 'background 0.3s ease',
-                            '&:hover': {
-                              backgroundColor: '#f4f6f8',
-                            },
-                          }}
-                        >
-                          <TableCell>{log.message}</TableCell>
-                          <TableCell>{log.device}</TableCell>
-                          <TableCell>
-                            <Chip
-                              icon={severityIcons[severity]}
-                              label={severity}
-                              color={severityColors[severity]}
-                              variant="outlined"
-                              size="small"
-                              sx={{ fontWeight: 500 }}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            {new Date(log.timestamp).toLocaleString()}
-                          </TableCell>
-                          <TableCell>
-                            {log.image_url ? (
-                              <img
-                                src={log.image_url}
-                                alt="Log"
-                                style={{
-                                  width: 80,
-                                  height: 80,
-                                  objectFit: 'cover',
-                                  borderRadius: 8,
-                                  border: '1px solid #ccc',
-                                }}
+                  </TableHead>
+                  <TableBody>
+                    {logs.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} align="center" sx={{ py: 6 }}>
+                          <Typography variant="h6" color="text.secondary">
+                            No logs available.
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      logs.map((log) => {
+                        const severity = getSeverity(log.message);
+                        return (
+                          <TableRow
+                            key={log._id}
+                            hover
+                            onClick={() => handleRowClick(log)}
+                            sx={{
+                              cursor: 'pointer',
+                              transition: 'background 0.3s ease',
+                              '&:hover': {
+                                backgroundColor: '#f4f6f8',
+                              },
+                            }}
+                          >
+                            <TableCell>{log.message}</TableCell>
+                            <TableCell>{log.device}</TableCell>
+                            <TableCell>
+                              <Chip
+                                icon={severityIcons[severity]}
+                                label={severity}
+                                color={severityColors[severity]}
+                                variant="outlined"
+                                size="small"
+                                sx={{ fontWeight: 500 }}
                               />
-                            ) : (
-                              <Typography variant="body2" color="text.secondary">
-                                No image
-                              </Typography>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Fade>
-        )}
+                            </TableCell>
+                            <TableCell>
+                              {new Date(log.timestamp).toLocaleString()}
+                            </TableCell>
+                            <TableCell>
+                              {log.image_url ? (
+                                <img
+                                  src={log.image_url}
+                                  alt="Log"
+                                  style={{
+                                    width: 80,
+                                    height: 80,
+                                    objectFit: 'cover',
+                                    borderRadius: 8,
+                                    border: '1px solid #ccc',
+                                  }}
+                                />
+                              ) : (
+                                <Typography variant="body2" color="text.secondary">
+                                  No image
+                                </Typography>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Fade>
+          )}
 
-        {/* Modal dialog for detailed log */}
-        <Dialog open={!!selectedLog} onClose={handleClose} maxWidth="sm" fullWidth>
-          <DialogTitle>Log Details</DialogTitle>
-          <DialogContent dividers>
-            {selectedLog && (
-              <>
-                <Typography variant="subtitle1" gutterBottom>
-                  <strong>Message:</strong> {selectedLog.message}
-                </Typography>
-                <Typography variant="subtitle1" gutterBottom>
-                  <strong>Device:</strong> {selectedLog.device}
-                </Typography>
-                <Typography variant="subtitle1" gutterBottom>
-                  <strong>Severity:</strong> {getSeverity(selectedLog.message)}
-                </Typography>
-                <Typography variant="subtitle1" gutterBottom>
-                  <strong>Timestamp:</strong> {new Date(selectedLog.timestamp).toLocaleString()}
-                </Typography>
-                {selectedLog.image_url ? (
-                  <Box
-                    component="img"
-                    src={selectedLog.image_url}
-                    alt="Log detail"
-                    sx={{
-                      width: '100%',
-                      maxHeight: 400,
-                      objectFit: 'contain',
-                      mt: 2,
-                      borderRadius: 2,
-                      border: '1px solid #ccc',
-                    }}
-                  />
-                ) : (
-                  <Typography variant="body2" color="text.secondary" mt={2}>
-                    No image available.
+          {/* Modal dialog for detailed log */}
+          <Dialog open={!!selectedLog} onClose={handleClose} maxWidth="sm" fullWidth>
+            <DialogTitle>Log Details</DialogTitle>
+            <DialogContent dividers>
+              {selectedLog && (
+                <>
+                  <Typography variant="subtitle1" gutterBottom>
+                    <strong>Message:</strong> {selectedLog.message}
                   </Typography>
-                )}
-              </>
-            )}
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose} color="primary" variant="contained">
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Paper>
+                  <Typography variant="subtitle1" gutterBottom>
+                    <strong>Device:</strong> {selectedLog.device}
+                  </Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    <strong>Severity:</strong> {getSeverity(selectedLog.message)}
+                  </Typography>
+                  <Typography variant="subtitle1" gutterBottom>
+                    <strong>Timestamp:</strong> {new Date(selectedLog.timestamp).toLocaleString()}
+                  </Typography>
+                  {selectedLog.image_url ? (
+                    <Box
+                      component="img"
+                      src={selectedLog.image_url}
+                      alt="Log detail"
+                      sx={{
+                        width: '100%',
+                        maxHeight: 400,
+                        objectFit: 'contain',
+                        mt: 2,
+                        borderRadius: 2,
+                        border: '1px solid #ccc',
+                      }}
+                    />
+                  ) : (
+                    <Typography variant="body2" color="text.secondary" mt={2}>
+                      No image available.
+                    </Typography>
+                  )}
+                </>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleClose} color="primary" variant="contained">
+                Close
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </Paper>
+      </Fade>
     </Box>
   );
 }
