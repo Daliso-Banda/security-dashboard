@@ -202,6 +202,7 @@ app.get('/api/pending', (req, res) => {
 });
 
 // Logs
+// Logs (Updated)
 app.get('/api/logs', async (req, res) => {
   try {
     const rawLogs = await LoginLog.find().sort({ timestamp: -1 });
@@ -209,13 +210,15 @@ app.get('/api/logs', async (req, res) => {
       _id: log._id,
       message: log.name === "Unknown" ? `An unknown person attempted access.` : `${log.name} entered.`,
       device: log.device_id,
-      timestamp: log.timestamp
+      timestamp: log.timestamp,
+      image_url: log.image_path ? `http://localhost:${PORT}/uploads/${log.image_path}` : null
     }));
     res.status(200).json({ success: true, logs });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
+
 
 // View registered users
 app.get('/api/registered-users', async (req, res) => {
