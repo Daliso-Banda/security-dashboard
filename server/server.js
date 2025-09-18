@@ -5,10 +5,9 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
-const mqtt = require('mqtt');
 const { spawn } = require('child_process');
 const http = require('http');
-const WebSocket = require('ws'); // WebSocket import
+const WebSocket = require('ws'); 
 
 // -------------------- Express Setup --------------------
 const app = express();
@@ -37,7 +36,7 @@ const loginLogSchema = new mongoose.Schema({
   device_id: String,
   timestamp: { type: Date, default: Date.now },
   image_path: String,
-  status: { type: String, default: 'granted' } // optional field for future denied/granted
+  status: { type: String, default: 'granted' }
 });
 const LoginLog = mongoose.model('LoginLog', loginLogSchema, 'login_logs');
 
@@ -58,18 +57,6 @@ mongoose.connect(process.env.MONGO_URI, {
   useUnifiedTopology: true,
 }).then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ MongoDB Error:", err.message));
-
-// -------------------- MQTT Setup --------------------
-const mqttClient = mqtt.connect(process.env.MQTT_BROKER_URL);
-const pendingRegistrations = new Map();
-
-mqttClient.on('connect', () => {
-  console.log("✅ MQTT Connected");
-  mqttClient.subscribe('security/alerts');
-  mqttClient.subscribe('security/fingerprint-id');
-});
-
-mqttClient.on('error', err => console.error("❌ MQTT Error:", err.message));
 
 // -------------------- HTTP + WebSocket Server --------------------
 const server = http.createServer(app);
@@ -119,34 +106,6 @@ wss.on('connection', ws => {
   });
 });
 
-// -------------------- MQTT Message Handling --------------------
-mqttClient.on('message', async (topic, message) => {
-  try {
-    const payload = JSON.parse(message.toString());
-
-    if (topic === 'security/alerts') console.log('📥 Alert:', payload);
-
-    if (topic === 'security/fingerprint-id') {
-      const { name, id } = payload;
-      const pending = pendingRegistrations.get(name);
-      if (!pending) return console.warn(`⚠️ No pending registration for: ${name}`);
-
-      await RegisteredUser.create({ ...pending, fingerprint_id: id });
-
-      console.log(`✅ ${name} fully registered with fingerprint ID ${id}`);
-
-      clients.forEach(client => {
-        if (client.readyState === WebSocket.OPEN)
-          client.send(JSON.stringify({ type: 'fingerprint_result', name, success: true }));
-      });
-
-      pendingRegistrations.delete(name);
-    }
-  } catch (err) {
-    console.error("❌ MQTT Message Error:", err.message);
-  }
-});
-
 // -------------------- Multer for uploads --------------------
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, UPLOAD_DIR),
@@ -159,50 +118,80 @@ const upload = multer({ storage });
 
 // -------------------- API Routes --------------------
 
-// Face registration
+// Face and Fingerprint Registration
 app.post('/api/register-face', upload.single('image'), async (req, res) => {
-  const { name, userId } = req.body;
-  const imagePath = req.file?.path;
+    const { name, userId } = req.body;
+    const imagePath = req.file?.path;
 
-  if (!name || !userId || !imagePath)
-    return res.status(400).json({ success: false, message: 'Name, number, and image are required.' });
-
-  const pythonProcess = spawn('python', [path.join(__dirname, 'register_user.py'), imagePath, name]);
-  let stdout = '', stderr = '';
-
-  pythonProcess.stdout.on('data', data => stdout += data.toString());
-  pythonProcess.stderr.on('data', data => stderr += data.toString());
-
-  pythonProcess.on('close', () => {
-    try {
-      const result = JSON.parse(stdout);
-      if (!result.success)
-        return res.status(200).json({ success: false, message: result.message || 'No face detected.' });
-
-      const { face_encoding, image_binary_base64 } = result.data;
-      const imageBuffer = Buffer.from(image_binary_base64, 'base64');
-
-      pendingRegistrations.set(name, {
-        name,
-        face_encoding,
-        image_data: imageBuffer,
-        image_path: path.basename(imagePath),
-        timestamp: new Date()
-      });
-
-      mqttClient.publish('security/request-fingerprint', JSON.stringify({ name, number: parseInt(userId) }));
-
-      return res.status(202).json({ success: true, message: 'Face registered. Awaiting fingerprint...', name, userId });
-    } catch (err) {
-      return res.status(500).json({ success: false, message: 'Face registration failed.', error: stderr || err.message });
+    if (!name || !userId || !imagePath) {
+        return res.status(400).json({ success: false, message: 'Name, number, and image are required.' });
     }
-  });
 
-  pythonProcess.on('error', () => res.status(500).json({ success: false, message: 'Failed to run Python script.' }));
+    // First, run the face registration script
+    const faceProcess = spawn('python', [path.join(__dirname, 'register_user.py'), imagePath, name]);
+    let face_stdout = '', face_stderr = '';
+
+    faceProcess.stdout.on('data', data => face_stdout += data.toString());
+    faceProcess.stderr.on('data', data => face_stderr += data.toString());
+
+    faceProcess.on('close', async (face_code) => {
+        try {
+            const face_result = JSON.parse(face_stdout);
+
+            if (face_code !== 0) {
+                return res.status(500).json({ success: false, message: face_result.message || 'Face registration failed.', error: face_stderr });
+            }
+
+            // If face registration is successful, proceed with fingerprint enrollment
+            const fingerprintProcess = spawn('python', [path.join(__dirname, 'enroll_fingerprint.py'), userId, name]);
+            let fingerprint_stdout = '', fingerprint_stderr = '';
+
+            fingerprintProcess.stdout.on('data', data => fingerprint_stdout += data.toString());
+            fingerprintProcess.stderr.on('data', data => fingerprint_stderr += data.toString());
+
+            fingerprintProcess.on('close', async (fingerprint_code) => {
+                try {
+                    const fingerprint_result = JSON.parse(fingerprint_stdout);
+
+                    if (fingerprint_code !== 0) {
+                        return res.status(500).json({ success: false, message: fingerprint_result.message || 'Fingerprint registration failed.', error: fingerprint_stderr });
+                    }
+
+                    // Combine face and fingerprint data and save to database
+                    await RegisteredUser.create({
+                        name,
+                        fingerprint_id: fingerprint_result.data.id,
+                        face_encoding: face_result.data.encoding, // Note: The key is 'encoding' from your first script
+                        image_data: Buffer.from(face_result.data.image_binary_base64, 'base64'),
+                        image_path: path.basename(imagePath),
+                    });
+
+                    // Notify the frontend via WebSocket that both steps are complete
+                    clients.forEach(client => {
+                        if (client.readyState === WebSocket.OPEN) {
+                            client.send(JSON.stringify({
+                                type: 'fingerprint_result',
+                                name,
+                                success: true
+                            }));
+                        }
+                    });
+
+                    return res.status(201).json({ success: true, message: `User '${name}' registered successfully.`, name, userId });
+                } catch (err) {
+                    return res.status(500).json({ success: false, message: 'Fingerprint registration failed.', error: fingerprint_stderr || err.message });
+                }
+            });
+
+            fingerprintProcess.on('error', (err) => res.status(500).json({ success: false, message: 'Failed to run fingerprint script.', error: err.message }));
+
+        } catch (err) {
+            return res.status(500).json({ success: false, message: 'Face registration failed.', error: face_stderr || err.message });
+        }
+    });
+
+    faceProcess.on('error', () => res.status(500).json({ success: false, message: 'Failed to run face recognition script.' }));
 });
-
-// Pending registrations
-app.get('/api/pending', (req, res) => res.json(Array.from(pendingRegistrations.keys())));
 
 // Logs
 app.get('/api/logs', async (req, res) => {
@@ -221,13 +210,11 @@ app.get('/api/logs', async (req, res) => {
   }
 });
 
-// -------------------- New Chart APIs --------------------
-
-// Pie chart: Access Summary
+// Access Summary
 app.get('/api/access-summary', async (req, res) => {
   try {
     const total = await LoginLog.countDocuments();
-    const denied = await LoginLog.countDocuments({ status: 'denied' }); // optional if using status field
+    const denied = await LoginLog.countDocuments({ status: 'denied' });
     const granted = total - denied;
 
     res.json([
@@ -239,7 +226,7 @@ app.get('/api/access-summary', async (req, res) => {
   }
 });
 
-// Bar chart: Access Trend per day
+// Access Trend
 app.get('/api/access-trend', async (req, res) => {
   try {
     const logs = await LoginLog.aggregate([
