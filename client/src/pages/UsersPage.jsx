@@ -23,8 +23,8 @@ import {
     DialogActions,
     Snackbar,
     Alert,
-    Fade,
     Chip,
+    Zoom,
 } from '@mui/material';
 
 const PRIVILEGE_OPTIONS = ['User', 'Admin', 'Moderator'];
@@ -64,8 +64,6 @@ export default function UsersPage() {
         setSelectedUser(user);
         setUserPrivilege(user.privilege || 'User');
     };
-
-    const handleBack = () => setSelectedUser(null);
 
     const handlePrivilegeChange = (e) => setUserPrivilege(e.target.value);
 
@@ -126,7 +124,7 @@ export default function UsersPage() {
                 </Box>
             )}
 
-            {!loading && !selectedUser && (
+            {!loading && (
                 <Paper
                     elevation={3}
                     sx={{
@@ -215,45 +213,67 @@ export default function UsersPage() {
                 </Paper>
             )}
 
-            {selectedUser && (
-                <Fade in={true}>
-                    <Paper
-                        elevation={5}
-                        sx={{
-                            p: 5,
-                            maxWidth: 600,
-                            mx: 'auto',
-                            mt: 3,
-                            borderRadius: 4,
-                            bgcolor: '#fff',
-                            boxShadow: '0 4px 15px rgb(0 0 0 / 0.15)',
-                        }}
-                    >
-                        <Stack spacing={3} alignItems="center">
+            {/* Profile Popup */}
+            <Dialog
+                open={Boolean(selectedUser)}
+                onClose={() => setSelectedUser(null)}
+                maxWidth="sm"
+                fullWidth
+                TransitionComponent={Zoom}
+                PaperProps={{
+                    sx: {
+                        borderRadius: 4,
+                        overflow: 'hidden',
+                        boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+                    },
+                }}
+            >
+                {selectedUser && (
+                    <>
+                        {/* Header Banner */}
+                        <Box
+                            sx={{
+                                height: 120,
+                                background: 'linear-gradient(135deg, #1976d2, #42a5f5)',
+                                position: 'relative',
+                            }}
+                        >
                             <Avatar
                                 src={selectedUser.image_url}
                                 alt={selectedUser.name}
                                 sx={{
-                                    width: 160,
-                                    height: 160,
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+                                    width: 120,
+                                    height: 120,
+                                    border: '4px solid white',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                                    position: 'absolute',
+                                    left: '50%',
+                                    bottom: -60,
+                                    transform: 'translateX(-50%)',
+                                    transition: 'transform 0.3s ease',
+                                    '&:hover': { transform: 'translateX(-50%) scale(1.05)' },
                                 }}
                             />
-                            <Typography variant="h5" fontWeight="bold" color="#222">
+                        </Box>
+
+                        <DialogContent sx={{ pt: 8, textAlign: 'center' }}>
+                            <Typography variant="h5" fontWeight="bold" gutterBottom>
                                 {selectedUser.name}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" color="text.secondary" gutterBottom>
                                 Registered on: {new Date(selectedUser.timestamp).toLocaleString()}
                             </Typography>
 
-                            <FormControl fullWidth>
+                            <Divider sx={{ my: 3 }} />
+
+                            <FormControl fullWidth sx={{ mt: 2 }}>
                                 <InputLabel id="privilege-select-label">User Privilege</InputLabel>
                                 <Select
                                     labelId="privilege-select-label"
                                     value={userPrivilege}
                                     label="User Privilege"
                                     onChange={handlePrivilegeChange}
-                                    sx={{ fontWeight: 600 }}
+                                    sx={{ fontWeight: 600, borderRadius: 2 }}
                                 >
                                     {PRIVILEGE_OPTIONS.map((opt) => (
                                         <MenuItem key={opt} value={opt}>
@@ -262,42 +282,55 @@ export default function UsersPage() {
                                     ))}
                                 </Select>
                             </FormControl>
+                        </DialogContent>
 
-                            <Stack direction="row" spacing={2} mt={2} sx={{ width: '100%', justifyContent: 'center' }}>
-                                <Button
-                                    variant="contained"
-                                    onClick={handleSave}
-                                    disabled={isSaving}
-                                    sx={{ minWidth: 100 }}
-                                >
-                                    {isSaving ? 'Saving...' : 'Save'}
-                                </Button>
-                                <Button variant="outlined" color="error" onClick={handleDelete} sx={{ minWidth: 100 }}>
-                                    Delete User
-                                </Button>
-                                <Button variant="text" onClick={handleBack} sx={{ minWidth: 100 }}>
-                                    Cancel
-                                </Button>
-                            </Stack>
-                        </Stack>
-                    </Paper>
-                </Fade>
-            )}
+                        <DialogActions sx={{ justifyContent: 'space-evenly', pb: 3, px: 4 }}>
+                            <Button
+                                variant="contained"
+                                onClick={handleSave}
+                                disabled={isSaving}
+                                sx={{ borderRadius: 2, px: 3 }}
+                            >
+                                {isSaving ? 'Saving...' : 'Save'}
+                            </Button>
+                            <Button
+                                variant="outlined"
+                                color="error"
+                                onClick={handleDelete}
+                                sx={{ borderRadius: 2, px: 3 }}
+                            >
+                                Delete
+                            </Button>
+                            <Button
+                                variant="text"
+                                onClick={() => setSelectedUser(null)}
+                                sx={{ borderRadius: 2, px: 3 }}
+                            >
+                                Close
+                            </Button>
+                        </DialogActions>
+                    </>
+                )}
+            </Dialog>
 
+            {/* Delete Confirmation */}
             <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
-                <DialogTitle>Confirm Deletion</DialogTitle>
-                <DialogContent>
-                    Are you sure you want to delete user <strong>{selectedUser?.name}</strong>? This action is
-                    permanent.
+                <DialogTitle sx={{ fontWeight: 'bold', color: 'error.main' }}>
+                    Confirm Deletion
+                </DialogTitle>
+                <DialogContent dividers>
+                    Are you sure you want to delete user <strong>{selectedUser?.name}</strong>? This
+                    action is permanent and cannot be undone.
                 </DialogContent>
                 <DialogActions>
                     <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
-                    <Button color="error" onClick={confirmDelete}>
+                    <Button color="error" variant="contained" onClick={confirmDelete}>
                         Delete
                     </Button>
                 </DialogActions>
             </Dialog>
 
+            {/* Snackbar Notifications */}
             <Snackbar
                 open={snackbar.open}
                 autoHideDuration={6000}

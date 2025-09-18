@@ -17,7 +17,7 @@ import {
   Slide
 } from '@mui/material';
 
-const client = mqtt.connect('ws://10.251.211.92:9001');
+const client = mqtt.connect('ws://10.230.100.92:1883');
 client.on('connect', () => {
   console.log('✅ Connected to MQTT broker');
 });
