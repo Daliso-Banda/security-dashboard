@@ -48,12 +48,12 @@ export default function Dashboard() {
     const fetchCharts = async () => {
       try {
         // Pie chart
-        const resPie = await fetch("http://localhost:3000/api/access-summary");
+        const resPie = await fetch("http://10.24.91.149:5175/api/access-summary");
         const pieJson = await resPie.json();
         if (pieJson) setAccessData(pieJson);
 
         // Bar chart
-        const resBar = await fetch("http://localhost:3000/api/access-trend");
+        const resBar = await fetch("http://10.24.91.149:5175/api/access-trend");
         const barJson = await resBar.json();
 
         if (barJson) {

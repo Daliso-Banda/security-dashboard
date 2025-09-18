@@ -19,7 +19,7 @@ if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 
 // Middleware
 app.use('/uploads', express.static(UPLOAD_DIR));
-app.use(cors({ origin: 'http://localhost:5173' }));
+app.use(cors({ origin: 'http://10.24.91.149:5175' }));
 app.use(express.json());
 
 // -------------------- MongoDB Schemas --------------------
@@ -255,7 +255,7 @@ app.get('/api/registered-users', async (req, res) => {
         _id: u._id,
         name: u.name,
         timestamp: u.timestamp,
-        image_url: u.image_path ? `http://localhost:${PORT}/uploads/${u.image_path}` : null
+        image_url: u.image_path ? `http://10.24.91.149:5175/uploads/${u.image_path}` : null
       }))
     });
   } catch (err) {

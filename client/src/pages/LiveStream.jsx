@@ -8,7 +8,7 @@ export default function LiveStream() {
     const frameQueue = useRef([]);
     const processingRef = useRef(false);
 
-    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "ws://172.29.180.92:3000";
+    const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "ws://10.24.91.149:5175";
 
     useEffect(() => {
         if (wsRef.current) return;

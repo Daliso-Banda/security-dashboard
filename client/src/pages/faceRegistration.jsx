@@ -30,7 +30,7 @@ export default function RegisterUser() {
   const [pendingFingerprintName, setPendingFingerprintName] = useState(null);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://localhost:3000/ws");
+    const ws = new WebSocket("ws://10.24.91.149:5175/ws");
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === "fingerprint_result" && data.name === pendingFingerprintName) {

@@ -50,7 +50,7 @@ export default function UsersPage() {
     const fetchUsers = () => {
         setLoading(true);
         axios
-            .get('http://localhost:3000/api/registered-users')
+            .get('http://10.24.91.149:5175/api/registered-users')
             .then((res) => {
                 if (res.data.users) setUsers(res.data.users);
             })
