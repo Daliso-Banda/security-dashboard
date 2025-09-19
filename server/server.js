@@ -6,7 +6,8 @@ const path = require('path');
 const fs = require('fs');
 const cors = require('cors');
 const { spawn } = require('child_process');
-const http = require('http');
+// const http = require('http'); // Remove this line
+const https = require('https'); // Add this line
 const WebSocket = require('ws'); 
 
 // -------------------- Express Setup --------------------
@@ -19,7 +20,8 @@ if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 
 // Middleware
 app.use('/uploads', express.static(UPLOAD_DIR));
-app.use(cors({ origin: 'http://10.24.91.149:5175' }));
+// Update CORS origin to use https
+app.use(cors({ origin: 'https://10.24.91.149:5175' })); 
 app.use(express.json());
 
 // -------------------- MongoDB Schemas --------------------
@@ -58,8 +60,15 @@ mongoose.connect(process.env.MONGO_URI, {
 }).then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.error("❌ MongoDB Error:", err.message));
 
-// -------------------- HTTP + WebSocket Server --------------------
-const server = http.createServer(app);
+// -------------------- HTTPS + WebSocket Server --------------------
+// Read the certificate and key files
+const options = {
+  key: fs.readFileSync('10.24.91.149-key.pem'),
+  cert: fs.readFileSync('10.24.91.149.pem')
+};
+
+// Create an HTTPS server instead of an HTTP one
+const server = https.createServer(options, app);
 const wss = new WebSocket.Server({ server });
 
 const clients = new Set();
@@ -202,7 +211,8 @@ app.get('/api/logs', async (req, res) => {
       message: log.name === "Unknown" ? `An unknown person attempted access.` : `${log.name} entered.`,
       device: log.device_id,
       timestamp: log.timestamp,
-      image_url: log.image_path ? `http://localhost:${PORT}/uploads/${log.image_path}` : null
+      // Update image URL to use https
+      image_url: log.image_path ? `https://10.24.91.149:${PORT}/uploads/${log.image_path}` : null
     }));
     res.status(200).json({ success: true, logs });
   } catch (err) {
@@ -255,7 +265,8 @@ app.get('/api/registered-users', async (req, res) => {
         _id: u._id,
         name: u.name,
         timestamp: u.timestamp,
-        image_url: u.image_path ? `http://10.24.91.149:5175/uploads/${u.image_path}` : null
+        // Update image URL to use https
+        image_url: u.image_path ? `https://10.24.91.149:${PORT}/uploads/${u.image_path}` : null
       }))
     });
   } catch (err) {
@@ -294,4 +305,4 @@ app.get('/api/alerts', async (req, res) => {
 });
 
 // -------------------- Start Server --------------------
-server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+server.listen(PORT, () => console.log(`🚀 Server running on https://10.24.91.149:${PORT}`));
