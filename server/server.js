@@ -109,6 +109,9 @@ app.post('/api/register-face', upload.single('image'), async (req, res) => {
     return res.status(400).json({ success: false, message: 'Name and image are required.' });
   }
 
+  // Generate a random fingerprint ID (1-199)
+  const fingerprint_id = Math.floor(Math.random() * 199) + 1;
+
   try {
     sendWSUpdate('registration_status', name, 'Face registration started...');
 
@@ -129,23 +132,69 @@ app.post('/api/register-face', upload.single('image'), async (req, res) => {
           return res.status(500).json({ success: false, message: faceResult.message });
         }
 
-        // Immediate response (Option A)
         sendWSUpdate('registration_status', name, '✅ Face registered successfully!');
-        res.status(200).json({ success: true, message: 'Face registered successfully.', data: faceResult.data });
 
-        // Save asynchronously
+        // Save face data to DB
+        let userDoc;
         try {
-          await RegisteredUser.create({
+          userDoc = await RegisteredUser.create({
             name,
             face_encoding: faceResult.data.encoding,
             image_data: Buffer.from(faceResult.data.image_binary_base64, 'base64'),
             image_path: path.basename(imagePath),
+            fingerprint_id // Save the random fingerprint ID
           });
           sendWSUpdate('registration_status', name, '✅ Face data saved to DB.');
         } catch (err) {
           console.error("[ERROR] Saving face data to DB:", err.message);
           sendWSUpdate('registration_status', name, '⚠️ Failed to save face data to DB.');
         }
+
+        // Start fingerprint enrollment
+        sendWSUpdate('registration_status', name, `Fingerprint enrollment started (ID: ${fingerprint_id})...`);
+        const fingerprintProcess = spawn('python3', [path.join(__dirname, 'enroll_fingerprint.py'), fingerprint_id, name]);
+        let fp_stdout = '', fp_stderr = '';
+
+        fingerprintProcess.stdout.on('data', data => fp_stdout += data.toString());
+        fingerprintProcess.stderr.on('data', data => fp_stderr += data.toString());
+
+        fingerprintProcess.on('close', async (fp_code) => {
+          try {
+            const fpLines = fp_stdout.trim().split('\n');
+            const fpJsonLine = fpLines[fpLines.length - 1];
+            const fpResult = JSON.parse(fpJsonLine);
+
+            if (!fpResult.success) {
+              sendWSUpdate('registration_status', name, `❌ Fingerprint enrollment failed: ${fpResult.message}`);
+              // Optionally, remove user if fingerprint fails
+              // await RegisteredUser.deleteOne({ _id: userDoc._id });
+              return;
+            }
+
+            // Update user with fingerprint enrollment status (optional)
+            await RegisteredUser.updateOne(
+              { _id: userDoc._id },
+              { $set: { fingerprint_id: fingerprint_id } }
+            );
+
+            sendWSUpdate('registration_status', name, '✅ Fingerprint enrolled and saved to DB.');
+          } catch (err) {
+            console.error('[ERROR] Parsing fingerprint JSON output:', err.message);
+            sendWSUpdate('registration_status', name, '⚠️ Failed to parse fingerprint enrollment result.');
+          }
+        });
+
+        fingerprintProcess.on('error', err => {
+          console.error('[ERROR] Failed to run fingerprint Python script:', err);
+          sendWSUpdate('registration_status', name, '❌ Failed to run fingerprint enrollment script.');
+        });
+
+        // Immediate response to client after face registration
+        res.status(200).json({
+          success: true,
+          message: 'Face registered successfully. Fingerprint enrollment in progress.',
+          data: { ...faceResult.data, fingerprint_id }
+        });
 
       } catch (err) {
         console.error('[ERROR] Parsing Python JSON output:', err.message);
