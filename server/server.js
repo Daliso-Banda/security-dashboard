@@ -13,10 +13,8 @@ const WebSocket = require('ws');
 const app = express();
 const PORT = process.env.PORT || 3000;
 const UPLOAD_DIR = path.join(__dirname, 'uploads');
-
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR);
 
-// CORS
 app.use(cors({
   origin: [
     "http://localhost:5173",
@@ -79,8 +77,9 @@ wss.on('connection', ws => {
   });
 });
 
-// Helper to send WebSocket updates
+// Helper to send WebSocket updates AND log to terminal
 const sendWSUpdate = (type, name, message) => {
+  console.log(`[REGISTRATION] ${name}: ${message}`);
   clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify({ type, name, message }));
@@ -100,7 +99,7 @@ const upload = multer({ storage });
 
 // -------------------- API Routes --------------------
 
-// Face Registration (Option A)
+// Face + Fingerprint Registration
 app.post('/api/register-face', upload.single('image'), async (req, res) => {
   const { name } = req.body;
   const imagePath = req.file?.path;
@@ -109,110 +108,81 @@ app.post('/api/register-face', upload.single('image'), async (req, res) => {
     return res.status(400).json({ success: false, message: 'Name and image are required.' });
   }
 
-  // Generate a random fingerprint ID (1-199)
   const fingerprint_id = Math.floor(Math.random() * 199) + 1;
 
   try {
     sendWSUpdate('registration_status', name, 'Face registration started...');
 
-    const faceProcess = spawn('python3', [path.join(__dirname, 'register_user.py'), imagePath, name]);
-    let face_stdout = '', face_stderr = '';
-
-    faceProcess.stdout.on('data', data => face_stdout += data.toString());
-    faceProcess.stderr.on('data', data => face_stderr += data.toString());
-
-    faceProcess.on('close', async (face_code) => {
-      try {
-        const lines = face_stdout.trim().split('\n');
-        const jsonLine = lines[lines.length - 1];
-        const faceResult = JSON.parse(jsonLine);
-
-        if (!faceResult.success) {
-          sendWSUpdate('registration_status', name, `❌ ${faceResult.message}`);
-          return res.status(500).json({ success: false, message: faceResult.message });
-        }
-
-        sendWSUpdate('registration_status', name, '✅ Face registered successfully!');
-
-        // Save face data to DB
-        let userDoc;
+    // 1️⃣ Face registration
+    const faceResult = await new Promise((resolve, reject) => {
+      const faceProcess = spawn('python3', [path.join(__dirname, 'register_user.py'), imagePath, name]);
+      let stdout = '', stderr = '';
+      faceProcess.stdout.on('data', data => stdout += data.toString());
+      faceProcess.stderr.on('data', data => stderr += data.toString());
+      faceProcess.on('close', code => {
         try {
-          userDoc = await RegisteredUser.create({
-            name,
-            face_encoding: faceResult.data.encoding,
-            image_data: Buffer.from(faceResult.data.image_binary_base64, 'base64'),
-            image_path: path.basename(imagePath),
-            fingerprint_id // Save the random fingerprint ID
-          });
-          sendWSUpdate('registration_status', name, '✅ Face data saved to DB.');
+          const jsonLine = stdout.trim().split('\n').pop();
+          const result = JSON.parse(jsonLine);
+          if (!result.success) reject(new Error(result.message));
+          else resolve(result);
         } catch (err) {
-          console.error("[ERROR] Saving face data to DB:", err.message);
-          sendWSUpdate('registration_status', name, '⚠️ Failed to save face data to DB.');
+          reject(new Error('Failed to parse face registration result.'));
         }
+      });
+      faceProcess.on('error', err => reject(err));
+    });
+    sendWSUpdate('registration_status', name, '✅ Face registered successfully!');
 
-        // Start fingerprint enrollment
-        sendWSUpdate('registration_status', name, `Fingerprint enrollment started (ID: ${fingerprint_id})...`);
-        const fingerprintProcess = spawn('python3', [path.join(__dirname, 'enroll_fingerprint.py'), fingerprint_id, name]);
-        let fp_stdout = '', fp_stderr = '';
+    // 2️⃣ Fingerprint enrollment
+    sendWSUpdate('registration_status', name, `Fingerprint enrollment started (ID: ${fingerprint_id})...`);
+    const fpResult = await new Promise((resolve, reject) => {
+      const fpProcess = spawn('python3', [path.join(__dirname, 'enroll_fingerprint.py'), fingerprint_id, name]);
+      let stdout = '', stderr = '';
+      fpProcess.stdout.on('data', data => stdout += data.toString());
+      fpProcess.stderr.on('data', data => stderr += data.toString());
+      fpProcess.on('close', code => {
+        try {
+          const jsonLine = stdout.trim().split('\n').pop();
+          const result = JSON.parse(jsonLine);
+          if (!result.success) reject(new Error(result.message));
+          else resolve(result);
+        } catch (err) {
+          reject(new Error('Failed to parse fingerprint enrollment result.'));
+        }
+      });
+      fpProcess.on('error', err => reject(err));
+    });
+    sendWSUpdate('registration_status', name, '✅ Fingerprint enrolled successfully!');
 
-        fingerprintProcess.stdout.on('data', data => fp_stdout += data.toString());
-        fingerprintProcess.stderr.on('data', data => fp_stderr += data.toString());
+    // 3️⃣ Save user **after both succeed**
+    const userDoc = await RegisteredUser.create({
+      name,
+      face_encoding: faceResult.data.encoding,
+      image_data: fs.existsSync(imagePath) ? fs.readFileSync(imagePath) : null,
+      image_path: path.basename(imagePath),
+      fingerprint_id
+    });
+    sendWSUpdate('registration_status', name, '✅ User saved to DB successfully.');
 
-        fingerprintProcess.on('close', async (fp_code) => {
-          try {
-            const fpLines = fp_stdout.trim().split('\n');
-            const fpJsonLine = fpLines[fpLines.length - 1];
-            const fpResult = JSON.parse(fpJsonLine);
-
-            if (!fpResult.success) {
-              sendWSUpdate('registration_status', name, `❌ Fingerprint enrollment failed: ${fpResult.message}`);
-              // Optionally, remove user if fingerprint fails
-              // await RegisteredUser.deleteOne({ _id: userDoc._id });
-              return;
-            }
-
-            // Update user with fingerprint enrollment status (optional)
-            await RegisteredUser.updateOne(
-              { _id: userDoc._id },
-              { $set: { fingerprint_id: fingerprint_id } }
-            );
-
-            sendWSUpdate('registration_status', name, '✅ Fingerprint enrolled and saved to DB.');
-          } catch (err) {
-            console.error('[ERROR] Parsing fingerprint JSON output:', err.message);
-            sendWSUpdate('registration_status', name, '⚠️ Failed to parse fingerprint enrollment result.');
-          }
-        });
-
-        fingerprintProcess.on('error', err => {
-          console.error('[ERROR] Failed to run fingerprint Python script:', err);
-          sendWSUpdate('registration_status', name, '❌ Failed to run fingerprint enrollment script.');
-        });
-
-        // Immediate response to client after face registration
-        res.status(200).json({
-          success: true,
-          message: 'Face registered successfully. Fingerprint enrollment in progress.',
-          data: { ...faceResult.data, fingerprint_id }
-        });
-
-      } catch (err) {
-        console.error('[ERROR] Parsing Python JSON output:', err.message);
-        console.error('STDOUT:', face_stdout);
-        console.error('STDERR:', face_stderr);
-        return res.status(500).json({ success: false, message: 'Failed to parse Python JSON.', error: err.message });
+    res.status(200).json({
+      success: true,
+      message: 'Face and fingerprint registered successfully.',
+      data: {
+        name,
+        embedding_length: faceResult.data.embedding_length,
+        fingerprint_id,
+        user_id: userDoc._id
       }
     });
 
-    faceProcess.on('error', err => {
-      console.error('[ERROR] Failed to run Python script:', err);
-      return res.status(500).json({ success: false, message: 'Failed to run Python script.', error: err.message });
-    });
-
   } catch (err) {
-    res.status(500).json({ success: false, message: 'Registration process failed.', error: err.message });
+    console.error('[ERROR] Registration failed:', err.message);
+    sendWSUpdate('registration_status', name, `❌ Registration failed: ${err.message}`);
+    return res.status(500).json({ success: false, message: 'Registration failed.', error: err.message });
   }
 });
+
+// -------------------- Other APIs (Logs, Users, Alerts, Summary) --------------------
 
 // Logs
 app.get('/api/logs', async (req, res) => {
@@ -237,7 +207,6 @@ app.get('/api/access-summary', async (req, res) => {
     const total = await LoginLog.countDocuments();
     const denied = await LoginLog.countDocuments({ status: 'denied' });
     const granted = total - denied;
-
     res.json([
       { name: "Granted", value: granted, color: "#00b894" },
       { name: "Denied", value: denied, color: "#d63031" }
