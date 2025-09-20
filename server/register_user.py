@@ -4,13 +4,7 @@ import base64
 import pickle
 import json
 import numpy as np
-from pymongo import MongoClient
 from insightface.app import FaceAnalysis
-
-# === MongoDB Setup ===
-client = MongoClient("mongodb://admin:tembo123@172.27.243.149:27017/admin")
-db = client["face_access"]
-users_collection = db["registered_users"]
 
 # === InsightFace Setup ===
 print("[INFO] Initializing InsightFace for registration...")
@@ -30,7 +24,6 @@ def register_user(image_path, name):
         return response, 1
 
     try:
-        # Load and detect face
         import cv2
         img = cv2.imread(image_path)
         if img is None:
@@ -46,26 +39,20 @@ def register_user(image_path, name):
         response["message"] = "No face detected in the image."
         return response, 4
 
-    # Take first detected face
     embedding = faces[0].embedding
     if embedding.shape != (512,):
         response["message"] = f"Invalid embedding shape: {embedding.shape}"
         return response, 5
 
-    try:
-        # Save to DB
-        users_collection.insert_one({
-            "name": name,
-            "encoding": encode_embedding(embedding)
-        })
-
-        response["success"] = True
-        response["message"] = f"User '{name}' registered successfully."
-        response["data"] = {"name": name, "embedding_length": len(embedding)}
-        return response, 0
-    except Exception as e:
-        response["message"] = f"Database error: {e}"
-        return response, 6
+    # ✅ Successful registration without saving to DB
+    response["success"] = True
+    response["message"] = f"Face for '{name}' processed successfully."
+    response["data"] = {
+        "name": name,
+        "encoding": encode_embedding(embedding),
+        "embedding_length": embedding.shape[0]
+    }
+    return response, 0
 
 # === CLI ===
 def main():
@@ -77,6 +64,7 @@ def main():
     name = sys.argv[2]
 
     result, code = register_user(image_path, name)
+    # Only JSON goes to stdout for Node.js
     print(json.dumps(result))
     sys.exit(code)
 
