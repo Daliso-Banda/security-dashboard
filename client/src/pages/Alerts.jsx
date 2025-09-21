@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { Box, Typography, Paper, Stack, Divider } from '@mui/material';
-import { io } from 'socket.io-client';
 import { styled, keyframes } from '@mui/system';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 
@@ -10,13 +9,6 @@ const fadeIn = keyframes`
   to { opacity: 1; transform: translateY(0); }
 `;
 
-// Fade out animation (for optional future use)
-const fadeOut = keyframes`
-  from { opacity: 1; }
-  to { opacity: 0; }
-`;
-
-// Styled alert box with fade-in and hover effect
 const AlertBox = styled(Box)(({ theme }) => ({
   backgroundColor: '#fff3f3',
   borderRadius: 10,
@@ -32,7 +24,6 @@ const AlertBox = styled(Box)(({ theme }) => ({
   },
 }));
 
-// Colored dot that can change color dynamically (e.g., severity)
 const SeverityDot = styled('span')(({ severity = 'high', theme }) => ({
   width: 14,
   height: 14,
@@ -50,76 +41,60 @@ const SeverityDot = styled('span')(({ severity = 'high', theme }) => ({
 
 export default function FetchAlerts() {
   const [alerts, setAlerts] = useState([]);
-
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://10.24.91.149:5175';
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://10.24.91.149:3000';
+  const WS_URL = BACKEND_URL.replace(/^http/, 'ws'); // ws://10.24.91.149:3000
 
   useEffect(() => {
-    const fetchAlerts = async () => {
+    // Fetch initial alerts via REST
+    fetch(`${BACKEND_URL}/api/alerts`)
+      .then(res => res.json())
+      .then(data => setAlerts(data.alerts || []));
+
+    // Native WebSocket connection
+    const ws = new WebSocket(WS_URL);
+
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+    };
+
+    ws.onmessage = (event) => {
       try {
-        const response = await fetch(`${BACKEND_URL}/api/alerts`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-        const data = await response.json();
-        if (data.success) setAlerts(data.alerts);
-        else console.error('Failed to fetch initial alerts:', data.error);
-      } catch (error) {
-        console.error('Error fetching alerts:', error);
+        const data = JSON.parse(event.data);
+        if (data.type === 'alert') {
+          setAlerts(prev => [data, ...prev]);
+        }
+      } catch (err) {
+        console.error('WebSocket message error:', err);
       }
     };
 
-    fetchAlerts();
+    ws.onerror = (err) => {
+      console.error('WebSocket error:', err);
+    };
 
-    const socket = io(BACKEND_URL);
+    ws.onclose = () => {
+      console.log('WebSocket closed');
+    };
 
-    socket.on('connect', () => console.log('Socket.IO connected!'));
-    socket.on('alert', (data) => setAlerts((prev) => [data, ...prev]));
-    socket.on('disconnect', () => console.log('Socket.IO disconnected.'));
-    socket.on('connect_error', (err) => console.error('Socket.IO connection error:', err.message));
-
-    return () => socket.disconnect();
-  }, [BACKEND_URL]);
+    return () => ws.close();
+  }, [BACKEND_URL, WS_URL]);
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        bgcolor: '#fafafa',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        p: 3,
-      }}
-    >
-      <Paper
-        elevation={8}
-        sx={{
-          width: { xs: '95%', sm: 520, md: 620, lg: 720 },
-          maxHeight: '80vh',
-          overflowY: 'auto',
-          borderRadius: 5,
-          p: 4,
-          boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
-          '&::-webkit-scrollbar': {
-            width: 8,
-          },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: 'rgba(195, 57, 43, 0.4)',
-            borderRadius: 4,
-          },
-          '&::-webkit-scrollbar-track': {
-            backgroundColor: '#f0f0f0',
-          },
-        }}
-      >
-        <Typography
-          variant="h4"
-          color="#b8322e"
-          fontWeight={800}
-          gutterBottom
-          sx={{ mb: 4, userSelect: 'none', display: 'flex', alignItems: 'center', gap: 1 }}
-        >
+    <Box sx={{ minHeight: '100vh', bgcolor: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
+      <Paper elevation={8} sx={{
+        width: { xs: '95%', sm: 520, md: 620, lg: 720 },
+        maxHeight: '80vh',
+        overflowY: 'auto',
+        borderRadius: 5,
+        p: 4,
+        boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
+        '&::-webkit-scrollbar': { width: 8 },
+        '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(195, 57, 43, 0.4)', borderRadius: 4 },
+        '&::-webkit-scrollbar-track': { backgroundColor: '#f0f0f0' },
+      }}>
+        <Typography variant="h4" color="#b8322e" fontWeight={800} gutterBottom sx={{ mb: 4, userSelect: 'none', display: 'flex', alignItems: 'center', gap: 1 }}>
           <NotificationsActiveIcon fontSize="large" /> Security Alerts
         </Typography>
-
         {alerts.length === 0 ? (
           <Box sx={{ textAlign: 'center', mt: 6 }}>
             <Typography variant="body1" color="text.secondary" mb={2}>
@@ -133,21 +108,12 @@ export default function FetchAlerts() {
               <AlertBox key={alert._id || alert.timestamp}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.7 }}>
                   <SeverityDot severity={alert.severity || 'high'} />
-                  <Typography
-                    variant="subtitle1"
-                    fontWeight={700}
-                    color="#a82d28"
-                    sx={{ flexGrow: 1 }}
-                  >
+                  <Typography variant="subtitle1" fontWeight={700} color="#a82d28" sx={{ flexGrow: 1 }}>
                     {alert.message}
                   </Typography>
                 </Box>
                 <Divider sx={{ mb: 1 }} />
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ fontStyle: 'italic', letterSpacing: 0.3 }}
-                >
+                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic', letterSpacing: 0.3 }}>
                   {new Date(alert.timestamp).toLocaleString(undefined, {
                     year: 'numeric',
                     month: 'short',

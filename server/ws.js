@@ -7,16 +7,14 @@ function setupWebSocket(server) {
     clients.add(ws);
     ws.on('close', () => clients.delete(ws));
   });
-  return wss;
 }
 
-function sendWSUpdate(type, name, message) {
+function broadcastAlert(alertData) {
   clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ type, name, message }));
+      client.send(JSON.stringify({ type: 'alert', ...alertData }));
     }
   });
-  console.log(`[REGISTRATION] ${name}: ${message}`);
 }
 
-module.exports = { setupWebSocket, sendWSUpdate };
+module.exports = { setupWebSocket, broadcastAlert };
