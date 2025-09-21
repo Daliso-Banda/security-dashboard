@@ -22,4 +22,12 @@ router.delete('/users/:id', async (req, res) => {
     res.status(500).json({ success: false, message: err.message });
   }
 });
+
+// Get user encoding by fingerprint ID
+router.get('/user-encoding/:fingerprint_id', async (req, res) => {
+  const user = await RegisteredUser.findOne({ fingerprint_id: Number(req.params.fingerprint_id) });
+  if (!user) return res.status(404).json({ encoding: null });
+  res.json({ encoding: user.face_encoding });
+});
+
 module.exports = router;
