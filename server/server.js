@@ -5,7 +5,8 @@ app.use(cors({
   origin: [
     "http://localhost:5173",
     "http://10.24.91.149:5173",
-    "http://10.24.91.149:5176"
+    "http://10.24.91.149:5176",
+    "http://10.227.213.120:5173",
   ],
   credentials: true
 }));
