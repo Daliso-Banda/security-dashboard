@@ -3,10 +3,11 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const path = require('path');
+//app.use('/api', require('./routes/registration'));
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
+app.use('/api', require('./routes/registration'));
 app.use(cors({
   origin: [
     "http://localhost:5173",

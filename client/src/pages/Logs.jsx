@@ -45,7 +45,7 @@ export default function Logs() {
   const [selectedLog, setSelectedLog] = useState(null);
 
   useEffect(() => {
-    axios.get('http://10.24.91.149:5175/api/logs')
+    axios.get('http://10.252.154.149:3000/api/logs')
       .then((res) => {
         if (res.data && Array.isArray(res.data.logs)) {
           setLogs(res.data.logs);

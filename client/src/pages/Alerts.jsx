@@ -41,7 +41,7 @@ const SeverityDot = styled('span')(({ severity = 'high', theme }) => ({
 
 export default function FetchAlerts() {
   const [alerts, setAlerts] = useState([]);
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://10.24.91.149:3000';
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://10.252.154.149:3000';
   const WS_URL = BACKEND_URL.replace(/^http/, 'ws'); // ws://10.24.91.149:3000
 
   useEffect(() => {

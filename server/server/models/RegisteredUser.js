@@ -4,7 +4,7 @@ const registeredUserSchema = new mongoose.Schema({
   timestamp: { type: Date, default: Date.now },
   face_encoding: String,
   image_data: Buffer,
-  image_path: String,
+  image_filename: String,
   fingerprint_id: Number,
   privilege: { type: String, default: "user" }
 });

@@ -30,7 +30,7 @@ export default function RegisterUser() {
   const [pendingFingerprintName, setPendingFingerprintName] = useState(null);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://10.24.91.149:5175/ws");
+    const ws = new WebSocket("ws://10.252.154.149:3000/ws");
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === "fingerprint_result" && data.name === pendingFingerprintName) {
@@ -76,7 +76,7 @@ export default function RegisterUser() {
     formData.append("image", capturedImageBlob, `${name}.jpg`);
 
     try {
-      const res = await axios.post("http://localhost:3000/api/register-face", formData);
+      const res = await axios.post("http://10.252.154.149:3000/api/register-face", formData);
       if (res.data.success) {
         showSnackbar("✅ Face registered. Awaiting fingerprint...", "info");
         setPendingFingerprintName(name);

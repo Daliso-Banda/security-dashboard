@@ -9,12 +9,15 @@ function setupWebSocket(server) {
   });
 }
 
-function broadcastAlert(alertData) {
+// New function to send updates
+function sendWSUpdate(eventType, userName, message) {
+  const alertData = { type: eventType, user: userName, message };
   clients.forEach(client => {
     if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({ type: 'alert', ...alertData }));
+      client.send(JSON.stringify(alertData));
     }
   });
 }
 
-module.exports = { setupWebSocket, broadcastAlert };
+// Export functions
+module.exports = { setupWebSocket, sendWSUpdate };

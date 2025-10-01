@@ -50,8 +50,9 @@ export default function UsersPage() {
     const fetchUsers = () => {
         setLoading(true);
         axios
-            .get('http://10.24.91.149:5175/api/registered-users')
+            .get('http://10.252.154.149:3000/api/Users')
             .then((res) => {
+                console.log(res)
                 if (res.data.users) setUsers(res.data.users);
             })
             .catch(() => {
@@ -71,7 +72,7 @@ export default function UsersPage() {
         if (!selectedUser) return;
         setIsSaving(true);
         axios
-            .patch(`http://localhost:3000/api/registered-users/${selectedUser._id}`, {
+            .patch(`http://10.252.154.149:3000/api/Users/${selectedUser._id}`, {
                 privilege: userPrivilege,
             })
             .then(() => {
@@ -89,7 +90,7 @@ export default function UsersPage() {
         if (!selectedUser) return;
         setDeleteDialogOpen(false);
         axios
-            .delete(`http://localhost:3000/api/registered-users/${selectedUser._id}`)
+            .delete(`http://10.252.154.149:3000/api/Users/${selectedUser._id}`)
             .then(() => {
                 showSnackbar('User deleted successfully', 'success');
                 fetchUsers();
@@ -239,21 +240,19 @@ export default function UsersPage() {
                             }}
                         >
                             <Avatar
-                                src={selectedUser.image_url}
-                                alt={selectedUser.name}
+                                src={user.image_url || undefined}
+                                alt={user.name}
                                 sx={{
-                                    width: 120,
-                                    height: 120,
-                                    border: '4px solid white',
-                                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
-                                    position: 'absolute',
-                                    left: '50%',
-                                    bottom: -60,
-                                    transform: 'translateX(-50%)',
-                                    transition: 'transform 0.3s ease',
-                                    '&:hover': { transform: 'translateX(-50%) scale(1.05)' },
+                                    width: 60,
+                                    height: 60,
+                                    border: '2px solid #ddd',
+                                    boxShadow: '0 0 8px rgba(0,0,0,0.1)',
+                                    mr: 3,
                                 }}
-                            />
+                            >
+                                {!user.image_url && user.name[0]}
+                            </Avatar>
+
                         </Box>
 
                         <DialogContent sx={{ pt: 8, textAlign: 'center' }}>

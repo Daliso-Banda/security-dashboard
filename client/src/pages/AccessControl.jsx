@@ -17,10 +17,7 @@ import {
   Slide
 } from '@mui/material';
 
-const client = mqtt.connect('ws://10.230.100.92:1883');
-client.on('connect', () => {
-  console.log('✅ Connected to MQTT broker');
-});
+
 
 export default function AccessControl() {
   const [device, setDevice] = useState('door1');
