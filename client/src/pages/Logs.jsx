@@ -40,13 +40,13 @@ export default function Logs() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [fadeIn, setFadeIn] = useState(false); // New state for transition
-
+  const [fadeIn, setFadeIn] = useState(false);
   const [selectedLog, setSelectedLog] = useState(null);
 
   useEffect(() => {
     axios.get('http://10.252.154.149:3000/api/logs')
       .then((res) => {
+        console.log(res);
         if (res.data && Array.isArray(res.data.logs)) {
           setLogs(res.data.logs);
         } else {
@@ -60,12 +60,13 @@ export default function Logs() {
         console.error("Error fetching logs:", err);
       });
 
-    // Trigger fade-in animation
     const timer = setTimeout(() => setFadeIn(true), 100);
     return () => clearTimeout(timer);
   }, []);
 
+  // Safe getSeverity function
   const getSeverity = (message) => {
+    if (!message || typeof message !== 'string') return 'Low'; // default
     const msg = message.toLowerCase();
     if (msg.includes('unknown person')) return 'High';
     if (msg.includes('attempted')) return 'Medium';
@@ -105,12 +106,7 @@ export default function Logs() {
           <Typography
             variant="h4"
             gutterBottom
-            sx={{
-              fontWeight: 600,
-              color: '#2c3e50',
-              mb: 4,
-              textAlign: 'center',
-            }}
+            sx={{ fontWeight: 600, color: '#2c3e50', mb: 4, textAlign: 'center' }}
           >
             Security Activity Logs
           </Typography>
@@ -149,7 +145,9 @@ export default function Logs() {
                       </TableRow>
                     ) : (
                       logs.map((log) => {
-                        const severity = getSeverity(log.message);
+                        const messageText = log.message || 'Unknown user';
+                        const deviceText = log.device || 'Unknown device';
+                        const severity = getSeverity(messageText);
                         return (
                           <TableRow
                             key={log._id}
@@ -158,13 +156,11 @@ export default function Logs() {
                             sx={{
                               cursor: 'pointer',
                               transition: 'background 0.3s ease',
-                              '&:hover': {
-                                backgroundColor: '#f4f6f8',
-                              },
+                              '&:hover': { backgroundColor: '#f4f6f8' },
                             }}
                           >
-                            <TableCell>{log.message}</TableCell>
-                            <TableCell>{log.device}</TableCell>
+                            <TableCell>{messageText}</TableCell>
+                            <TableCell>{deviceText}</TableCell>
                             <TableCell>
                               <Chip
                                 icon={severityIcons[severity]}
@@ -175,9 +171,7 @@ export default function Logs() {
                                 sx={{ fontWeight: 500 }}
                               />
                             </TableCell>
-                            <TableCell>
-                              {new Date(log.timestamp).toLocaleString()}
-                            </TableCell>
+                            <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
                             <TableCell>
                               {log.image_url ? (
                                 <img
@@ -214,13 +208,13 @@ export default function Logs() {
               {selectedLog && (
                 <>
                   <Typography variant="subtitle1" gutterBottom>
-                    <strong>Message:</strong> {selectedLog.message}
+                    <strong>Message:</strong> {selectedLog.message || 'Unknown user'}
                   </Typography>
                   <Typography variant="subtitle1" gutterBottom>
-                    <strong>Device:</strong> {selectedLog.device}
+                    <strong>Device:</strong> {selectedLog.device || 'Unknown device'}
                   </Typography>
                   <Typography variant="subtitle1" gutterBottom>
-                    <strong>Severity:</strong> {getSeverity(selectedLog.message)}
+                    <strong>Severity:</strong> {getSeverity(selectedLog.message || '')}
                   </Typography>
                   <Typography variant="subtitle1" gutterBottom>
                     <strong>Timestamp:</strong> {new Date(selectedLog.timestamp).toLocaleString()}

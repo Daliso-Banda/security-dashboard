@@ -52,12 +52,9 @@ export default function UsersPage() {
         axios
             .get('http://10.252.154.149:3000/api/Users')
             .then((res) => {
-                console.log(res)
                 if (res.data.users) setUsers(res.data.users);
             })
-            .catch(() => {
-                showSnackbar('Failed to load users', 'error');
-            })
+            .catch(() => showSnackbar('Failed to load users', 'error'))
             .finally(() => setLoading(false));
     };
 
@@ -103,9 +100,7 @@ export default function UsersPage() {
         setSnackbar({ open: true, message, severity });
     };
 
-    const handleCloseSnackbar = () => {
-        setSnackbar({ ...snackbar, open: false });
-    };
+    const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
     return (
         <Box sx={{ p: 4, maxWidth: 1000, mx: 'auto', minHeight: '90vh', bgcolor: '#f9fafc' }}>
@@ -237,25 +232,32 @@ export default function UsersPage() {
                                 height: 120,
                                 background: 'linear-gradient(135deg, #1976d2, #42a5f5)',
                                 position: 'relative',
+                                mb: 6,
                             }}
                         >
                             <Avatar
-                                src={user.image_url || undefined}
-                                alt={user.name}
+                                src={selectedUser.image_url || undefined}
+                                alt={selectedUser.name}
                                 sx={{
-                                    width: 60,
-                                    height: 60,
-                                    border: '2px solid #ddd',
-                                    boxShadow: '0 0 8px rgba(0,0,0,0.1)',
-                                    mr: 3,
+                                    width: 120,              // bigger avatar
+                                    height: 120,
+                                    border: '3px solid #fff',
+                                    boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
+                                    position: 'absolute',
+                                    bottom: -60,             // adjust overlap
+                                    left: '50%',
+                                    transform: 'translateX(-50%)',
+                                    bgcolor: '#f0f0f0',
+                                    fontSize: 48,
+                                    objectFit: 'cover',      // zoom/crop image to fill
                                 }}
                             >
-                                {!user.image_url && user.name[0]}
+                                {!selectedUser.image_url && selectedUser.name[0]}
                             </Avatar>
 
                         </Box>
 
-                        <DialogContent sx={{ pt: 8, textAlign: 'center' }}>
+                        <DialogContent sx={{ pt: 6, textAlign: 'center' }}>
                             <Typography variant="h5" fontWeight="bold" gutterBottom>
                                 {selectedUser.name}
                             </Typography>

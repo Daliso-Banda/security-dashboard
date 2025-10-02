@@ -3,21 +3,21 @@ const clients = new Set();
 
 function setupWebSocket(server) {
   const wss = new WebSocket.Server({ server });
-  wss.on('connection', ws => {
+
+  wss.on('connection', (ws) => {
     clients.add(ws);
     ws.on('close', () => clients.delete(ws));
   });
 }
 
-// New function to send updates
-function sendWSUpdate(eventType, userName, message) {
-  const alertData = { type: eventType, user: userName, message };
-  clients.forEach(client => {
+// Send registration updates to all connected clients
+function sendWSUpdate(eventType, name, message) {
+  const alertData = { type: eventType, name, message }; // use 'name' to match frontend
+  clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
       client.send(JSON.stringify(alertData));
     }
   });
 }
 
-// Export functions
 module.exports = { setupWebSocket, sendWSUpdate };

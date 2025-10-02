@@ -2,6 +2,7 @@
 
 import time
 import sys
+import subprocess
 from pyfingerprint.pyfingerprint import PyFingerprint
 
 def search_fingerprint():
@@ -35,7 +36,14 @@ def search_fingerprint():
         if positionNumber == -1:
             print("NO_MATCH")
         else:
-            print(positionNumber)  # fingerprint ID for auth_flow.py
+            print(f"[AUTH] Fingerprint matched! ID: {positionNumber}")
+            # ==============================
+            # === Trigger Face Recognition Script ===
+            # ==============================
+            try:
+                subprocess.run(["python3", "/home/codeofwar/FinalYearProject/FacialRecogition/facialReconigtion2.py"])
+            except Exception as e:
+                print(f"[ERROR] Failed to start face recognition: {e}")
 
     except Exception as e:
         print(f"Fingerprint search failed: {e}")
@@ -43,4 +51,3 @@ def search_fingerprint():
 
 if __name__ == "__main__":
     search_fingerprint()
-
