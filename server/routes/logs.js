@@ -2,9 +2,6 @@ const express = require('express');
 const LoginLog = require('../models/LoginLog');
 const router = express.Router();
 
-// Make sure Express serves the folder
-// app.use('/access_logs', express.static(path.join(__dirname, '..', 'access_logs')));
-
 router.get('/logs', async (req, res) => {
   try {
     const logs = await LoginLog.find().sort({ timestamp: -1 }).limit(100);
@@ -12,9 +9,9 @@ router.get('/logs', async (req, res) => {
     const logsWithImages = logs.map(log => {
       let image_url = null;
 
-      // Check that image_filename exists and is not empty
+      // Use the correct field from your schema
       if (log.image_filename && log.image_filename.trim() !== '') {
-        image_url = `http://10.252.154.149:3000/access_logs/${log.image_filename}`;
+        image_url = `http://10.252.154.149:3000/access_logs/${log.image_filename.trim()}`;
       }
 
       return {
@@ -22,7 +19,7 @@ router.get('/logs', async (req, res) => {
         timestamp: log.timestamp,
         status: log.status,
         name: log.name,
-        message: log.name,
+        message: log.name || 'Unknown',
         device: "Camera",
         image_url,
       };
@@ -30,6 +27,7 @@ router.get('/logs', async (req, res) => {
 
     res.json({ success: true, logs: logsWithImages });
   } catch (err) {
+    console.error("Error fetching logs:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
