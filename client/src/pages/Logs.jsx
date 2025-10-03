@@ -12,7 +12,6 @@ import {
   CircularProgress,
   Chip,
   Fade,
-  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -46,7 +45,6 @@ export default function Logs() {
   useEffect(() => {
     axios.get('http://10.252.154.149:3000/api/logs')
       .then((res) => {
-        console.log(res);
         if (res.data && Array.isArray(res.data.logs)) {
           setLogs(res.data.logs);
         } else {
@@ -64,28 +62,22 @@ export default function Logs() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Safe getSeverity function
   const getSeverity = (message) => {
-    if (!message || typeof message !== 'string') return 'Low'; // default
+    if (!message || typeof message !== 'string') return 'Low';
     const msg = message.toLowerCase();
     if (msg.includes('unknown person')) return 'High';
     if (msg.includes('attempted')) return 'Medium';
     return 'Low';
   };
 
-  const handleRowClick = (log) => {
-    setSelectedLog(log);
-  };
-
-  const handleClose = () => {
-    setSelectedLog(null);
-  };
+  const handleRowClick = (log) => setSelectedLog(log);
+  const handleClose = () => setSelectedLog(null);
 
   return (
     <Box
       sx={{
         minHeight: '100vh',
-        bgcolor: '#f8f9fa',
+        bgcolor: '#f0f2f5',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -97,16 +89,16 @@ export default function Logs() {
           elevation={6}
           sx={{
             width: '100%',
-            maxWidth: 1300,
+            maxWidth: 1400,
             p: { xs: 3, md: 5 },
             borderRadius: 4,
-            boxShadow: '0px 6px 20px rgba(0,0,0,0.1)',
+            boxShadow: '0 6px 25px rgba(0,0,0,0.1)',
           }}
         >
           <Typography
             variant="h4"
             gutterBottom
-            sx={{ fontWeight: 600, color: '#2c3e50', mb: 4, textAlign: 'center' }}
+            sx={{ fontWeight: 700, color: '#34495e', mb: 4, textAlign: 'center' }}
           >
             Security Activity Logs
           </Typography>
@@ -117,21 +109,24 @@ export default function Logs() {
             </Box>
           ) : error ? (
             <Fade in={true}>
-              <Alert severity="error" sx={{ my: 4 }}>
-                {error}
-              </Alert>
+              <Paper sx={{ p: 2, bgcolor: '#fdecea', borderRadius: 2, mb: 4 }}>
+                <Typography color="error">{error}</Typography>
+              </Paper>
             </Fade>
           ) : (
             <Fade in={true}>
-              <TableContainer sx={{ maxHeight: 600 }}>
+              <TableContainer sx={{ maxHeight: 600, borderRadius: 2, boxShadow: '0 3px 12px rgba(0,0,0,0.05)' }}>
                 <Table stickyHeader aria-label="logs table">
                   <TableHead>
-                    <TableRow sx={{ bgcolor: '#ecf0f1' }}>
-                      <TableCell><strong>Message</strong></TableCell>
-                      <TableCell><strong>Device</strong></TableCell>
-                      <TableCell><strong>Severity</strong></TableCell>
-                      <TableCell><strong>Timestamp</strong></TableCell>
-                      <TableCell><strong>Image</strong></TableCell>
+                    <TableRow sx={{ bgcolor: 'linear-gradient(90deg, #6c5ce7, #00b894)', color: '#fff' }}>
+                      {['Message', 'Device', 'Severity', 'Timestamp', 'Image'].map((head) => (
+                        <TableCell
+                          key={head}
+                          sx={{ color: '#fff', fontWeight: 700, fontSize: 14 }}
+                        >
+                          {head}
+                        </TableCell>
+                      ))}
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -144,7 +139,7 @@ export default function Logs() {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      logs.map((log) => {
+                      logs.map((log, index) => {
                         const messageText = log.message || 'Unknown user';
                         const deviceText = log.device || 'Unknown device';
                         const severity = getSeverity(messageText);
@@ -155,8 +150,9 @@ export default function Logs() {
                             onClick={() => handleRowClick(log)}
                             sx={{
                               cursor: 'pointer',
-                              transition: 'background 0.3s ease',
-                              '&:hover': { backgroundColor: '#f4f6f8' },
+                              backgroundColor: index % 2 === 0 ? '#fafafa' : '#fff',
+                              transition: 'all 0.3s ease',
+                              '&:hover': { backgroundColor: '#e9f1ff' },
                             }}
                           >
                             <TableCell>{messageText}</TableCell>
@@ -168,20 +164,22 @@ export default function Logs() {
                                 color={severityColors[severity]}
                                 variant="outlined"
                                 size="small"
-                                sx={{ fontWeight: 500 }}
+                                sx={{ fontWeight: 600, borderWidth: 1.5 }}
                               />
                             </TableCell>
                             <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
                             <TableCell>
                               {log.image_url ? (
-                                <img
+                                <Box
+                                  component="img"
                                   src={log.image_url}
                                   alt="Log"
-                                  style={{
+                                  sx={{
                                     width: 80,
                                     height: 80,
                                     objectFit: 'cover',
-                                    borderRadius: 8,
+                                    borderRadius: 2,
+                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                                     border: '1px solid #ccc',
                                   }}
                                 />
@@ -201,9 +199,10 @@ export default function Logs() {
             </Fade>
           )}
 
-          {/* Modal dialog for detailed log */}
           <Dialog open={!!selectedLog} onClose={handleClose} maxWidth="sm" fullWidth>
-            <DialogTitle>Log Details</DialogTitle>
+            <DialogTitle sx={{ bgcolor: '#6c5ce7', color: '#fff', fontWeight: 700 }}>
+              Log Details
+            </DialogTitle>
             <DialogContent dividers>
               {selectedLog && (
                 <>
@@ -230,7 +229,7 @@ export default function Logs() {
                         objectFit: 'contain',
                         mt: 2,
                         borderRadius: 2,
-                        border: '1px solid #ccc',
+                        boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
                       }}
                     />
                   ) : (

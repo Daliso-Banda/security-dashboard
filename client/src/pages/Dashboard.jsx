@@ -22,7 +22,6 @@ import {
   Bar,
   XAxis,
   YAxis,
-  Legend,
 } from "recharts";
 
 export default function Dashboard() {
@@ -36,56 +35,43 @@ export default function Dashboard() {
     { title: "Registered Users", path: "/users", icon: <PersonIcon />, color: "#636e72" },
   ];
 
-  // -------------------- State for dynamic charts --------------------
   const [accessData, setAccessData] = useState([
     { name: "Granted", value: 0, color: "#00b894" },
     { name: "Denied", value: 0, color: "#d63031" },
   ]);
-
   const [attemptsData, setAttemptsData] = useState([]);
 
   useEffect(() => {
     const fetchCharts = async () => {
       try {
-        // Pie chart
+        // Fetch Pie data
         const resPie = await fetch("http://10.252.154.149:3000/api/summary");
         const pieJson = await resPie.json();
         if (pieJson) setAccessData(pieJson);
 
-        // Bar chart
+        // Fetch Bar data
         const resBar = await fetch("http://10.252.154.149:3000/api/access-trend");
         const barJson = await resBar.json();
-
         if (barJson) {
-          // Map dates to weekday names
           const mappedData = barJson.map((item) => {
             const date = new Date(item.day);
             const dayName = date.toLocaleDateString("en-US", { weekday: "short" });
             return { ...item, day: dayName };
           });
 
-          // Combine duplicates for same weekday
           const combinedData = mappedData.reduce((acc, curr) => {
             const existing = acc.find((a) => a.day === curr.day);
-            if (existing) {
-              existing.Attempts += curr.Attempts;
-            } else {
-              acc.push({ day: curr.day, Attempts: curr.Attempts });
-            }
+            if (existing) existing.Attempts += curr.Attempts;
+            else acc.push({ day: curr.day, Attempts: curr.Attempts });
             return acc;
           }, []);
 
-          // Ensure all weekdays exist
           const allDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
           allDays.forEach((day) => {
-            if (!combinedData.find((d) => d.day === day)) {
-              combinedData.push({ day, Attempts: 0 });
-            }
+            if (!combinedData.find((d) => d.day === day)) combinedData.push({ day, Attempts: 0 });
           });
 
-          // Sort weekdays
           combinedData.sort((a, b) => allDays.indexOf(a.day) - allDays.indexOf(b.day));
-
           setAttemptsData(combinedData);
         }
       } catch (err) {
@@ -96,25 +82,23 @@ export default function Dashboard() {
     fetchCharts();
   }, []);
 
-  // Custom label for Pie chart (name + percentage)
-  const renderCustomLabel = ({ name, percent }) =>
-    `${name}: ${(percent * 100).toFixed(0)}%`;
+  const renderCustomLabel = ({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`;
 
   return (
     <Box
       sx={{
         minHeight: "100vh",
-        background: "linear-gradient(to right, #f8f9fa, #e9ecef)",
+        background: "linear-gradient(to right, #f0f3f7, #e1e6eb)",
         display: "flex",
         justifyContent: "center",
-        padding: "48px 16px",
+        padding: { xs: "24px 12px", md: "48px 16px" },
       }}
     >
       <Box sx={{ width: "100%", maxWidth: 1200 }}>
-        <Typography variant="h3" fontWeight="bold" color="primary" gutterBottom>
+        <Typography variant="h3" fontWeight="bold" color="#2d3436" gutterBottom>
           Security Dashboard
         </Typography>
-        <Divider sx={{ mb: 3 }} />
+        <Divider sx={{ mb: 4 }} />
 
         <Grid container spacing={4}>
           {/* Quick Navigation */}
@@ -130,26 +114,38 @@ export default function Dashboard() {
                     sx={{
                       backgroundColor: page.color,
                       color: "#fff",
-                      borderRadius: 3,
+                      borderRadius: 4,
                       textAlign: "center",
                       cursor: "pointer",
                       p: 3,
                       height: 180,
-                      boxShadow: 3,
+                      boxShadow: 4,
                       display: "flex",
                       flexDirection: "column",
                       justifyContent: "center",
                       transition: "all 0.3s ease",
                       "&:hover": {
-                        transform: "scale(1.05)",
-                        boxShadow: 6,
+                        transform: "scale(1.05) rotateX(2deg)",
+                        boxShadow: 8,
                       },
                     }}
                   >
-                    <Box sx={{ display: "flex", justifyContent: "center" }}>
-                      {React.cloneElement(page.icon, { sx: { fontSize: 60 } })}
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "center",
+                        alignItems: "center",
+                        background: "rgba(255,255,255,0.2)",
+                        width: 70,
+                        height: 70,
+                        borderRadius: "50%",
+                        mx: "auto",
+                        mb: 2,
+                      }}
+                    >
+                      {React.cloneElement(page.icon, { sx: { fontSize: 40, color: "#fff" } })}
                     </Box>
-                    <Typography variant="h6" mt={1.5}>
+                    <Typography variant="h6" fontWeight={600} sx={{ textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>
                       {page.title}
                     </Typography>
                   </Card>
@@ -159,44 +155,53 @@ export default function Dashboard() {
           </Grid>
 
           {/* Charts */}
-          <Grid item xs={12} md={4} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {/* Pie Chart */}
-            <Card sx={{ p: 2, borderRadius: 3, boxShadow: 3 }}>
-              <Typography variant="h6" mb={2}>
+          <Grid item xs={12} md={4} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {/* Access Attempts Pie Chart */}
+            <Card sx={{ p: 3, borderRadius: 4, boxShadow: 4, textAlign: "center" }}>
+              <Typography variant="h6" mb={2} fontWeight={600}>
                 Access Attempts
               </Typography>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie
                     data={accessData}
                     dataKey="value"
-                    outerRadius={110} // Bigger circle
-                    label={renderCustomLabel} // Custom labels
+                    innerRadius={60}
+                    outerRadius={100}
+                    label={renderCustomLabel}
                     labelLine={false}
+                    paddingAngle={5}
                   >
                     {accessData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip formatter={(value) => `${value} attempts`} />
                 </PieChart>
               </ResponsiveContainer>
             </Card>
 
-            {/* Bar Chart */}
-            <Card sx={{ p: 2, borderRadius: 3, boxShadow: 3, width: 800 }}>
-              <Typography variant="h6" mb={2}>
+            {/* Access Trend Bar Chart */}
+            <Card sx={{ p: 3, borderRadius: 4, boxShadow: 4 }}>
+              <Typography variant="h6" mb={2} fontWeight={600}>
                 Access Trend
               </Typography>
-              <ResponsiveContainer width="100%" height={200}>
-                <BarChart data={attemptsData}>
-                  <XAxis dataKey="day" />
-                  <YAxis />
-                  <Tooltip />
-                  <Legend />
-                  <Bar dataKey="Attempts" fill="#6c5ce7" />
-                </BarChart>
-              </ResponsiveContainer>
+              <Box sx={{ width: "100%", minHeight: 240 }}>
+                <ResponsiveContainer width={700} height={240}>
+                  <BarChart data={attemptsData} margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="gradientColor" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#6c5ce7" stopOpacity={0.9} />
+                        <stop offset="100%" stopColor="#6c5ce7" stopOpacity={0.3} />
+                      </linearGradient>
+                    </defs>
+                    <XAxis dataKey="day" tick={{ fontWeight: 600 }} />
+                    <YAxis tick={{ fontWeight: 600 }} />
+                    <Tooltip />
+                    <Bar dataKey="Attempts" fill="url(#gradientColor)" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
             </Card>
           </Grid>
         </Grid>
