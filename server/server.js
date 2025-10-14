@@ -25,6 +25,7 @@ app.use('/api', require('./routes/users'));
 app.use('/api', require('./routes/alerts'));
 app.use('/api', require('./routes/summary'));
 app.use('/api', require('./routes/registration.js'));
+app.use('/api', require('./routes/accessControl'));
 
 // Server setup
 const PORT = process.env.PORT || 3000;

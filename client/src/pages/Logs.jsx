@@ -18,6 +18,7 @@ import {
   DialogActions,
   Button,
 } from '@mui/material';
+const serverIP = import.meta.env.VITE_SERVER_IP;
 import axios from 'axios';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
@@ -43,7 +44,7 @@ export default function Logs() {
   const [selectedLog, setSelectedLog] = useState(null);
 
   useEffect(() => {
-    axios.get('http://10.252.154.149:3000/api/logs')
+    axios.get(`http://${serverIP}:3000/api/logs`)
       .then((res) => {
         if (res.data && Array.isArray(res.data.logs)) {
           setLogs(res.data.logs);

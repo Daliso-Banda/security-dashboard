@@ -16,7 +16,7 @@ import {
   Fade,
 } from "@mui/material";
 import axios from "axios";
-
+const serverIP = import.meta.env.VITE_SERVER_IP;
 const videoConstraints = { width: 480, height: 360, facingMode: "user" };
 
 export default function RegisterUser() {
@@ -83,7 +83,7 @@ export default function RegisterUser() {
         ...prev,
         { message: "🟡 Starting face registration...", severity: "info" },
       ]);
-      const response = await axios.post("http://10.252.154.149:3000/api/register-face", formData);
+      const response = await axios.post(`http://${serverIP}:3000/api/register-face`, formData);
 
       setSnackbarQueue((prev) => [
         ...prev,

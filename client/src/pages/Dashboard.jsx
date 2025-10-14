@@ -40,17 +40,17 @@ export default function Dashboard() {
     { name: "Denied", value: 0, color: "#d63031" },
   ]);
   const [attemptsData, setAttemptsData] = useState([]);
-
+const serverIP = import.meta.env.VITE_SERVER_IP;
   useEffect(() => {
     const fetchCharts = async () => {
       try {
         // Fetch Pie data
-        const resPie = await fetch("http://10.252.154.149:3000/api/summary");
+        const resPie = await fetch(`http://${serverIP}:3000/api/summary`);
         const pieJson = await resPie.json();
         if (pieJson) setAccessData(pieJson);
 
         // Fetch Bar data
-        const resBar = await fetch("http://10.252.154.149:3000/api/access-trend");
+        const resBar = await fetch(`http://${serverIP}:3000/api/access-trend`);
         const barJson = await resBar.json();
         if (barJson) {
           const mappedData = barJson.map((item) => {

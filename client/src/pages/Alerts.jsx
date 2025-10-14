@@ -3,6 +3,8 @@ import { Box, Typography, Paper, Stack, Divider } from '@mui/material';
 import { styled, keyframes } from '@mui/system';
 import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 
+const serverIP = import.meta.env.VITE_SERVER_IP;
+
 // Fade in animation for new alerts
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(-15px); }
@@ -41,43 +43,24 @@ const SeverityDot = styled('span')(({ severity = 'high', theme }) => ({
 
 export default function FetchAlerts() {
   const [alerts, setAlerts] = useState([]);
-  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://10.252.154.149:3000';
-  const WS_URL = BACKEND_URL.replace(/^http/, 'ws'); // ws://10.24.91.149:3000
+
+  // Function to fetch alerts using REST
+  const loadAlerts = async () => {
+    try {
+      const res = await fetch(`http://${serverIP}:3000/api/alerts`);
+      const data = await res.json();
+      setAlerts(data.alerts || []);
+    } catch (error) {
+      console.error("Failed to load alerts:", error);
+    }
+  };
 
   useEffect(() => {
-    // Fetch initial alerts via REST
-    fetch(`${BACKEND_URL}/api/alerts`)
-      .then(res => res.json())
-      .then(data => setAlerts(data.alerts || []));
+    loadAlerts(); // Initial load
+    const interval = setInterval(loadAlerts, 5000); // Auto-refresh every 5s
 
-    // Native WebSocket connection
-    const ws = new WebSocket(WS_URL);
-
-    ws.onopen = () => {
-      console.log('WebSocket connected');
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.type === 'alert') {
-          setAlerts(prev => [data, ...prev]);
-        }
-      } catch (err) {
-        console.error('WebSocket message error:', err);
-      }
-    };
-
-    ws.onerror = (err) => {
-      console.error('WebSocket error:', err);
-    };
-
-    ws.onclose = () => {
-      console.log('WebSocket closed');
-    };
-
-    return () => ws.close();
-  }, [BACKEND_URL, WS_URL]);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+const serverIP = import.meta.env.VITE_SERVER_IP;
 import axios from 'axios';
 import {
     Box,
@@ -49,7 +50,7 @@ export default function UsersPage() {
 
     const fetchUsers = () => {
         setLoading(true);
-        axios.get('http://10.252.154.149:3000/api/Users')
+        axios.get(`http://${serverIP}:3000/api/Users`)
             .then(res => {
                 const fetchedUsers = res.data.users || [];
                 setUsers(fetchedUsers);
@@ -69,7 +70,7 @@ export default function UsersPage() {
     const handleSave = () => {
         if (!selectedUser) return;
         setIsSaving(true);
-        axios.patch(`http://10.252.154.149:3000/api/Users/${selectedUser._id}`, { privilege: userPrivilege })
+        axios.patch(`http://${serverIP}:3000/api/Users/${selectedUser._id}`, { privilege: userPrivilege })
             .then(() => {
                 showSnackbar('User updated successfully', 'success');
                 fetchUsers();
@@ -83,7 +84,7 @@ export default function UsersPage() {
     const confirmDelete = () => {
         if (!selectedUser) return;
         setDeleteDialogOpen(false);
-        axios.delete(`http://10.252.154.149:3000/api/Users/${selectedUser._id}`)
+        axios.delete(`http://${serverIP}:3000/api/Users/${selectedUser._id}`)
             .then(() => {
                 showSnackbar('User deleted successfully', 'success');
                 fetchUsers();

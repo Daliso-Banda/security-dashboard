@@ -1,7 +1,7 @@
 const express = require('express');
 const LoginLog = require('../models/LoginLog');
 const router = express.Router();
-
+const SERVERIP = import.meta.env.VITE_SERVER_IP;
 router.get('/logs', async (req, res) => {
   try {
     const logs = await LoginLog.find().sort({ timestamp: -1 }).limit(100);
@@ -11,7 +11,7 @@ router.get('/logs', async (req, res) => {
 
       // Use the correct field from your schema
       if (log.image_filename && log.image_filename.trim() !== '') {
-        image_url = `http://10.252.154.149:3000/access_logs/${log.image_filename.trim()}`;
+        image_url = `http://${SERVERIP}:3000/access_logs/${log.image_filename.trim()}`;
       }
 
       return {
