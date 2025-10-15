@@ -6,6 +6,13 @@ import {
   Box,
   Card,
   Divider,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
 } from "@mui/material";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
@@ -22,6 +29,9 @@ import {
   Bar,
   XAxis,
   YAxis,
+  LineChart,
+  Line,
+  CartesianGrid,
 } from "recharts";
 
 export default function Dashboard() {
@@ -40,7 +50,13 @@ export default function Dashboard() {
     { name: "Denied", value: 0, color: "#d63031" },
   ]);
   const [attemptsData, setAttemptsData] = useState([]);
-const serverIP = import.meta.env.VITE_SERVER_IP;
+  const [hourlyData, setHourlyData] = useState([]);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [totalAttempts, setTotalAttempts] = useState(0);
+  const [totalAlerts, setTotalAlerts] = useState(0);
+  const [recentLogs, setRecentLogs] = useState([]);
+  const [privilegeData, setPrivilegeData] = useState([]);
+  const serverIP = import.meta.env.VITE_SERVER_IP;
   useEffect(() => {
     const fetchCharts = async () => {
       try {
@@ -74,12 +90,50 @@ const serverIP = import.meta.env.VITE_SERVER_IP;
           combinedData.sort((a, b) => allDays.indexOf(a.day) - allDays.indexOf(b.day));
           setAttemptsData(combinedData);
         }
+
+        // Fetch hourly data
+        const resHourly = await fetch(`http://${serverIP}:3000/api/hourly-trend`);
+        const hourlyJson = await resHourly.json();
+        if (hourlyJson) setHourlyData(hourlyJson);
+
+        // Fetch total counts
+        const resCounts = await fetch(`http://${serverIP}:3000/api/total-counts`);
+        const countsJson = await resCounts.json();
+        if (countsJson) {
+          setTotalUsers(countsJson.totalUsers);
+          setTotalAttempts(countsJson.totalAttempts);
+          setTotalAlerts(countsJson.totalAlerts);
+        }
+
+        // Fetch recent access logs
+        const resLogs = await fetch(`http://${serverIP}:3000/api/recent-logs`);
+        const logsJson = await resLogs.json();
+        if (logsJson) setRecentLogs(logsJson);
+
+        // Fetch user privilege data
+        const resPrivilege = await fetch(`http://${serverIP}:3000/api/privilege-distribution`);
+        const privilegeJson = await resPrivilege.json();
+        if (privilegeJson) setPrivilegeData(privilegeJson);
       } catch (err) {
         console.error("Error fetching chart data:", err);
       }
     };
 
     fetchCharts();
+  }, []);
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        const res = await fetch(`http://${serverIP}:3000/api/logs`);
+        const data = await res.json();
+        setRecentLogs(data.logs || []);
+      } catch (err) {
+        console.error("Error fetching logs:", err);
+      }
+    };
+
+    fetchLogs();
   }, []);
 
   const renderCustomLabel = ({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`;
@@ -154,6 +208,40 @@ const serverIP = import.meta.env.VITE_SERVER_IP;
             </Grid>
           </Grid>
 
+          {/* Summary Cards */}
+          <Grid container spacing={3} mb={4}>
+            <Grid item xs={12} sm={4}>
+              <Card sx={{ p: 3, textAlign: "center", boxShadow: 4 }}>
+                <Typography variant="h6" fontWeight={600} color="#2d3436">
+                  Total Users
+                </Typography>
+                <Typography variant="h4" fontWeight={700} color="#0984e3">
+                  {totalUsers}
+                </Typography>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card sx={{ p: 3, textAlign: "center", boxShadow: 4 }}>
+                <Typography variant="h6" fontWeight={600} color="#2d3436">
+                  Total Access Attempts
+                </Typography>
+                <Typography variant="h4" fontWeight={700} color="#6c5ce7">
+                  {totalAttempts}
+                </Typography>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card sx={{ p: 3, textAlign: "center", boxShadow: 4 }}>
+                <Typography variant="h6" fontWeight={600} color="#2d3436">
+                  Total Alerts
+                </Typography>
+                <Typography variant="h4" fontWeight={700} color="#d63031">
+                  {totalAlerts}
+                </Typography>
+              </Card>
+            </Grid>
+          </Grid>
+
           {/* Charts */}
           <Grid item xs={12} md={4} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {/* Access Attempts Pie Chart */}
@@ -202,6 +290,77 @@ const serverIP = import.meta.env.VITE_SERVER_IP;
                   </BarChart>
                 </ResponsiveContainer>
               </Box>
+            </Card>
+
+            {/* Hourly Access Trend Line Chart */}
+            <Card sx={{ p: 3, borderRadius: 4, boxShadow: 4 }}>
+              <Typography variant="h6" mb={2} fontWeight={600}>
+                Hourly Access Trend
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={hourlyData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="hour" />
+                  <YAxis />
+                  <Tooltip />
+                  <Line type="monotone" dataKey="Attempts" stroke="#6c5ce7" strokeWidth={2} />
+                </LineChart>
+              </ResponsiveContainer>
+            </Card>
+          </Grid>
+
+          {/* Recent Access Logs */}
+          <Grid item xs={12} md={8}>
+            <Card sx={{ p: 3, borderRadius: 4, boxShadow: 4 }}>
+              <Typography variant="h6" mb={2} fontWeight={600}>
+                Recent Access Logs
+              </Typography>
+              <TableContainer component={Paper}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell>Timestamp</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {recentLogs.map((log) => (
+                      <TableRow key={log._id}>
+                        <TableCell>{log.name}</TableCell>
+                        <TableCell>{log.status}</TableCell>
+                        <TableCell>{new Date(log.timestamp).toLocaleString()}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Card>
+          </Grid>
+
+          {/* User Privilege Distribution */}
+          <Grid item xs={12}>
+            <Card sx={{ p: 3, borderRadius: 4, boxShadow: 4 }}>
+              <Typography variant="h6" mb={2} fontWeight={600}>
+                User Privilege Distribution
+              </Typography>
+              <ResponsiveContainer width="100%" height={300}>
+                <PieChart>
+                  <Pie
+                    data={privilegeData}
+                    dataKey="value"
+                    innerRadius={80}
+                    outerRadius={120}
+                    label
+                    paddingAngle={5}
+                  >
+                    {privilegeData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
             </Card>
           </Grid>
         </Grid>

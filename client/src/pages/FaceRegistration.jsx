@@ -16,6 +16,7 @@ import {
   Fade,
 } from "@mui/material";
 import axios from "axios";
+
 const serverIP = import.meta.env.VITE_SERVER_IP;
 const videoConstraints = { width: 480, height: 360, facingMode: "user" };
 
@@ -48,6 +49,8 @@ export default function RegisterUser() {
     const imageSrc = webcamRef.current.getScreenshot();
     if (!imageSrc) return;
 
+    console.log("📸 Capturing image from webcam");
+
     const byteString = atob(imageSrc.split(",")[1]);
     const mimeString = imageSrc.split(",")[0].split(":")[1].split(";")[0];
     const ab = new ArrayBuffer(byteString.length);
@@ -56,6 +59,8 @@ export default function RegisterUser() {
 
     const blob = new Blob([ab], { type: mimeString });
     setCapturedImageBlob(blob);
+
+    console.log("Captured Blob:", blob);
 
     setSnackbarQueue((prev) => [
       ...prev,
@@ -78,12 +83,26 @@ export default function RegisterUser() {
     formData.append("userId", userId);
     formData.append("image", capturedImageBlob, `${name}.jpg`);
 
+    // Log what is being sent
+    console.log("Submitting registration:");
+    console.log("Name:", name);
+    console.log("User ID:", userId);
+    console.log("Image Blob:", capturedImageBlob);
+
     try {
       setSnackbarQueue((prev) => [
         ...prev,
         { message: "🟡 Starting face registration...", severity: "info" },
       ]);
-      const response = await axios.post(`http://${serverIP}:3000/api/register-face`, formData);
+      const response = await axios.post(
+        `http://${serverIP}:3000/api/register-face`,
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" },
+        }
+      );
+
+      console.log("Server response:", response.data);
 
       setSnackbarQueue((prev) => [
         ...prev,
@@ -99,7 +118,7 @@ export default function RegisterUser() {
       setUserId("");
       setCapturedImageBlob(null);
     } catch (err) {
-      console.error(err);
+      console.error("Registration error:", err);
       setSnackbarQueue((prev) => [
         ...prev,
         { message: "❌ Server error during registration.", severity: "error" },
@@ -109,6 +128,7 @@ export default function RegisterUser() {
 
   const handleRetake = () => {
     setCapturedImageBlob(null);
+    console.log("🔁 Retake photo triggered");
     setSnackbarQueue((prev) => [
       ...prev,
       { message: "🔁 Webcam reactivated. Retake your photo.", severity: "info" },
