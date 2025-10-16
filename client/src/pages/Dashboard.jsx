@@ -13,6 +13,7 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Stack,
 } from "@mui/material";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
@@ -38,11 +39,11 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const pages = [
-    { title: "Access Control", path: "/access", icon: <LockOpenIcon />, color: "#6c5ce7" },
-    { title: "Alerts", path: "/alerts", icon: <NotificationsActiveIcon />, color: "#d63031" },
-    { title: "Face Registration", path: "/registration", icon: <FaceIcon />, color: "#00b894" },
-    { title: "Access Logs", path: "/logs", icon: <ListAltIcon />, color: "#0984e3" },
-    { title: "Registered Users", path: "/users", icon: <PersonIcon />, color: "#636e72" },
+    { title: "Access Control", path: "/access", icon: <LockOpenIcon />, color: "#1565c0" },
+    { title: "Alerts", path: "/alerts", icon: <NotificationsActiveIcon />, color: "#e53935" },
+    { title: "Face Registration", path: "/registration", icon: <FaceIcon />, color: "#6c5ce7" },
+    { title: "Access Logs", path: "/logs", icon: <ListAltIcon />, color: "#26a69a" },
+    { title: "Registered Users", path: "/users", icon: <PersonIcon />, color: "#546e7a" },
   ];
 
   const [accessData, setAccessData] = useState([
@@ -139,19 +140,17 @@ export default function Dashboard() {
   const renderCustomLabel = ({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`;
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        background: "linear-gradient(to right, #f0f3f7, #e1e6eb)",
-        display: "flex",
-        justifyContent: "center",
-        padding: { xs: "24px 12px", md: "48px 16px" },
-      }}
-    >
+    <Box sx={{
+      minHeight: "100vh",
+      display: "flex",
+      justifyContent: "center",
+      padding: { xs: "24px 12px", md: "48px 16px" },
+    }}>
       <Box sx={{ width: "100%", maxWidth: 1200 }}>
-        <Typography variant="h3" fontWeight="bold" color="#2d3436" gutterBottom>
-          Security Dashboard
+        <Typography variant="h3" fontWeight="800" color="text.primary" gutterBottom>
+          Overview
         </Typography>
+        <Typography color="text.secondary" sx={{ mb: 3 }}>System status and key metrics</Typography>
         <Divider sx={{ mb: 4 }} />
 
         <Grid container spacing={4}>
@@ -160,47 +159,45 @@ export default function Dashboard() {
             <Typography variant="h5" gutterBottom>
               Quick Navigation
             </Typography>
-            <Grid container spacing={3} mt={1}>
+            <Grid container spacing={2.5} mt={1}>
               {pages.map((page) => (
-                <Grid item xs={12} sm={6} md={4} key={page.title}>
+                <Grid item xs={12} sm={6} md={3} lg={3} key={page.title}>
                   <Card
                     onClick={() => navigate(page.path)}
                     sx={{
-                      backgroundColor: page.color,
-                      color: "#fff",
-                      borderRadius: 4,
-                      textAlign: "center",
+                      borderRadius: 3,
+                      textAlign: "left",
                       cursor: "pointer",
-                      p: 3,
-                      height: 180,
-                      boxShadow: 4,
+                      p: 2.5,
+                      height: 160,
+                      border: '1px solid rgba(255,255,255,0.06)',
                       display: "flex",
                       flexDirection: "column",
-                      justifyContent: "center",
-                      transition: "all 0.3s ease",
-                      "&:hover": {
-                        transform: "scale(1.05) rotateX(2deg)",
-                        boxShadow: 8,
-                      },
+                      justifyContent: "space-between",
+                      transition: "transform .2s ease, box-shadow .2s ease",
+                      "&:hover": { transform: "translateY(-4px)", boxShadow: 10 },
                     }}
                   >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        background: "rgba(255,255,255,0.2)",
-                        width: 70,
-                        height: 70,
-                        borderRadius: "50%",
-                        mx: "auto",
-                        mb: 2,
-                      }}
-                    >
-                      {React.cloneElement(page.icon, { sx: { fontSize: 40, color: "#fff" } })}
-                    </Box>
-                    <Typography variant="h6" fontWeight={600} sx={{ textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}>
-                      {page.title}
+                    <Stack direction="row" spacing={1.5} alignItems="center">
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          bgcolor: `${page.color}33`,
+                          width: 48,
+                          height: 48,
+                          borderRadius: 1.5,
+                        }}
+                      >
+                        {React.cloneElement(page.icon, { sx: { fontSize: 28, color: page.color } })}
+                      </Box>
+                      <Typography variant="subtitle1" fontWeight={700}>
+                        {page.title}
+                      </Typography>
+                    </Stack>
+                    <Typography variant="caption" color="text.secondary">
+                      Open {page.title}
                     </Typography>
                   </Card>
                 </Grid>
@@ -211,31 +208,31 @@ export default function Dashboard() {
           {/* Summary Cards */}
           <Grid container spacing={3} mb={4}>
             <Grid item xs={12} sm={4}>
-              <Card sx={{ p: 3, textAlign: "center", boxShadow: 4 }}>
+              <Card sx={{ p: 3, textAlign: "center" }}>
                 <Typography variant="h6" fontWeight={600} color="#2d3436">
                   Total Users
                 </Typography>
-                <Typography variant="h4" fontWeight={700} color="#0984e3">
+                <Typography variant="h4" fontWeight={800} color="primary.main">
                   {totalUsers}
                 </Typography>
               </Card>
             </Grid>
             <Grid item xs={12} sm={4}>
-              <Card sx={{ p: 3, textAlign: "center", boxShadow: 4 }}>
+              <Card sx={{ p: 3, textAlign: "center" }}>
                 <Typography variant="h6" fontWeight={600} color="#2d3436">
                   Total Access Attempts
                 </Typography>
-                <Typography variant="h4" fontWeight={700} color="#6c5ce7">
+                <Typography variant="h4" fontWeight={800} color="secondary.main">
                   {totalAttempts}
                 </Typography>
               </Card>
             </Grid>
             <Grid item xs={12} sm={4}>
-              <Card sx={{ p: 3, textAlign: "center", boxShadow: 4 }}>
+              <Card sx={{ p: 3, textAlign: "center" }}>
                 <Typography variant="h6" fontWeight={600} color="#2d3436">
                   Total Alerts
                 </Typography>
-                <Typography variant="h4" fontWeight={700} color="#d63031">
+                <Typography variant="h4" fontWeight={800} color="#e53935">
                   {totalAlerts}
                 </Typography>
               </Card>
@@ -245,7 +242,7 @@ export default function Dashboard() {
           {/* Charts */}
           <Grid item xs={12} md={4} sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
             {/* Access Attempts Pie Chart */}
-            <Card sx={{ p: 3, borderRadius: 4, boxShadow: 4, textAlign: "center" }}>
+            <Card sx={{ p: 3, borderRadius: 3, textAlign: "center" }}>
               <Typography variant="h6" mb={2} fontWeight={600}>
                 Access Attempts
               </Typography>
@@ -270,7 +267,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Access Trend Bar Chart */}
-            <Card sx={{ p: 3, borderRadius: 4, boxShadow: 4 }}>
+            <Card sx={{ p: 3, borderRadius: 3 }}>
               <Typography variant="h6" mb={2} fontWeight={600}>
                 Access Trend
               </Typography>
@@ -293,7 +290,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Hourly Access Trend Line Chart */}
-            <Card sx={{ p: 3, borderRadius: 4, boxShadow: 4 }}>
+            <Card sx={{ p: 3, borderRadius: 3 }}>
               <Typography variant="h6" mb={2} fontWeight={600}>
                 Hourly Access Trend
               </Typography>
@@ -311,7 +308,7 @@ export default function Dashboard() {
 
           {/* Recent Access Logs */}
           <Grid item xs={12} md={8}>
-            <Card sx={{ p: 3, borderRadius: 4, boxShadow: 4 }}>
+            <Card sx={{ p: 3, borderRadius: 3 }}>
               <Typography variant="h6" mb={2} fontWeight={600}>
                 Recent Access Logs
               </Typography>
@@ -340,7 +337,7 @@ export default function Dashboard() {
 
           {/* User Privilege Distribution */}
           <Grid item xs={12}>
-            <Card sx={{ p: 3, borderRadius: 4, boxShadow: 4 }}>
+            <Card sx={{ p: 3, borderRadius: 3 }}>
               <Typography variant="h6" mb={2} fontWeight={600}>
                 User Privilege Distribution
               </Typography>

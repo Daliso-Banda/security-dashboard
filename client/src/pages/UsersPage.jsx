@@ -97,8 +97,8 @@ export default function UsersPage() {
     const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
     return (
-        <Box sx={{ p: 4, maxWidth: 1000, mx: 'auto', minHeight: '90vh', bgcolor: '#f4f6f8' }}>
-            <Typography variant="h4" fontWeight="bold" mb={4} align="center" sx={{ letterSpacing: 1, color: '#1a1a1a' }}>
+        <Box sx={{ p: 4, maxWidth: 1000, mx: 'auto', minHeight: '90vh', bgcolor: 'background.default' }}>
+            <Typography variant="h4" fontWeight="800" mb={4} align="center" sx={{ letterSpacing: 1 }}>
                 Registered Users
             </Typography>
 
@@ -112,9 +112,9 @@ export default function UsersPage() {
                     sx={{
                         width: '60%',
                         maxWidth: 450,
-                        bgcolor: '#fff',
+                        bgcolor: 'background.paper',
                         borderRadius: 2,
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        '& .MuiOutlinedInput-root': { borderRadius: 2 },
                     }}
                 />
             </Box>
@@ -124,7 +124,7 @@ export default function UsersPage() {
                     <CircularProgress color="primary" size={36} />
                 </Box>
             ) : (
-                <Paper elevation={3} sx={{ p: 3, borderRadius: 4, bgcolor: '#fff', boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}>
+                <Paper elevation={6} sx={{ p: 3, borderRadius: 3 }}>
                     <List>
                         {filteredUsers.length === 0 ? (
                             <Typography align="center" color="text.secondary" sx={{ py: 6 }}>No users found.</Typography>
@@ -133,9 +133,9 @@ export default function UsersPage() {
                                 <ListItemButton
                                     onClick={() => handleUserClick(user)}
                                     sx={{
-                                        mb: 2, py: 2, borderRadius: 3, bgcolor: '#fafafa',
-                                        transition: 'all 0.3s ease', boxShadow: '0 2px 6px rgba(0,0,0,0.06)',
-                                        '&:hover': { bgcolor: '#f0f4f8', boxShadow: '0 8px 24px rgba(0,0,0,0.12)', transform: 'translateY(-2px)' },
+                                        mb: 2, py: 2, borderRadius: 2, bgcolor: 'rgba(255,255,255,0.03)',
+                                        transition: 'all 0.3s ease', boxShadow: '0 2px 10px rgba(0,0,0,0.4)',
+                                        '&:hover': { bgcolor: 'rgba(144,202,249,0.10)', boxShadow: '0 6px 22px rgba(0,0,0,0.6)' },
                                         display: 'flex', alignItems: 'center',
                                     }}
                                 >
@@ -146,10 +146,10 @@ export default function UsersPage() {
                                             sx={{
                                                 width: 60, height: 60, mr: 3,
                                                 borderRadius: '50%',
-                                                border: '2px solid #ddd',
-                                                boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                                                backgroundImage: user.image_url ? 'none' : 'linear-gradient(135deg, #1976d2, #42a5f5)',
-                                                color: '#fff',
+                                                border: '2px solid rgba(255,255,255,0.06)',
+                                                boxShadow: '0 4px 18px rgba(0,0,0,0.6)',
+                                                backgroundImage: user.image_url ? 'none' : 'linear-gradient(135deg, #0f1524, #121826)',
+                                                color: '#e6e9ef',
                                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                                                 fontWeight: 'bold',
                                             }}
@@ -160,18 +160,18 @@ export default function UsersPage() {
                                     <ListItemText
                                         primary={
                                             <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
-                                                <Typography variant="subtitle1" fontWeight={700} noWrap sx={{ maxWidth: 240 }} color="#1a1a1a">{user.name}</Typography>
+                                                <Typography variant="subtitle1" fontWeight={700} noWrap sx={{ maxWidth: 240 }}>{user.name}</Typography>
                                                 <Chip
                                                     label={user.privilege || 'User'}
                                                     size="small"
                                                     sx={{
                                                         fontWeight: 600, textTransform: 'capitalize',
                                                         bgcolor: user.privilege === 'Admin'
-                                                            ? 'linear-gradient(45deg, #FF6B6B, #FF5252)'
+                                                            ? 'rgba(229, 115, 115, 0.2)'
                                                             : user.privilege === 'Moderator'
-                                                                ? 'linear-gradient(45deg, #42A5F5, #1976D2)'
-                                                                : '#e0e0e0',
-                                                        color: user.privilege === 'User' ? '#333' : '#fff',
+                                                                ? 'rgba(144, 202, 249, 0.2)'
+                                                                : 'rgba(255,255,255,0.08)',
+                                                        color: '#e6e9ef',
                                                     }}
                                                 />
                                             </Stack>
@@ -188,28 +188,26 @@ export default function UsersPage() {
                 </Paper>
             )}
 
-            {/* Profile Dialog */}
             <Dialog
                 open={Boolean(selectedUser)}
                 onClose={() => setSelectedUser(null)}
                 maxWidth="sm"
                 fullWidth
                 TransitionComponent={Zoom}
-                PaperProps={{ sx: { borderRadius: 4, overflow: 'hidden', boxShadow: '0 16px 48px rgba(0,0,0,0.18)' } }}
+                PaperProps={{ sx: { borderRadius: 3, overflow: 'hidden' } }}
             >
                 {selectedUser && (
                     <>
-                        <Box sx={{ height: 140, background: 'linear-gradient(135deg, #1976d2, #42a5f5)', position: 'relative', mb: 10 }}>
+                        <Box sx={{ height: 140, background: 'linear-gradient(135deg, #0f1524, #121826)', position: 'relative', mb: 10 }}>
                             <Avatar
                                 src={selectedUser.image_url || undefined}
                                 alt={selectedUser.name}
                                 sx={{
-                                    width: 120, height: 120, border: '4px solid #fff',
-                                    boxShadow: '0 8px 24px rgba(0,0,0,0.3)',
+                                    width: 120, height: 120, border: '4px solid rgba(255,255,255,0.12)',
+                                    boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
                                     position: 'absolute', bottom: -60, left: '50%', transform: 'translateX(-50%)',
-                                    bgcolor: '#f0f0f0', fontSize: 48, objectFit: 'cover',
-                                    backgroundImage: selectedUser.image_url ? 'none' : 'linear-gradient(135deg, #1976d2, #42a5f5)',
-                                    color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    bgcolor: '#0f1524', fontSize: 48, objectFit: 'cover',
+                                    color: '#e6e9ef', display: 'flex', alignItems: 'center', justifyContent: 'center',
                                 }}
                             >
                                 {!selectedUser.image_url && selectedUser.name[0]}
@@ -217,7 +215,7 @@ export default function UsersPage() {
                         </Box>
 
                         <DialogContent sx={{ pt: 6, textAlign: 'center' }}>
-                            <Typography variant="h5" fontWeight="bold" gutterBottom>{selectedUser.name}</Typography>
+                            <Typography variant="h5" fontWeight="800" gutterBottom>{selectedUser.name}</Typography>
                             <Typography variant="body2" color="text.secondary" gutterBottom>
                                 Registered on: {new Date(selectedUser.timestamp).toLocaleString()}
                             </Typography>
@@ -249,7 +247,6 @@ export default function UsersPage() {
                 )}
             </Dialog>
 
-            {/* Delete Confirmation */}
             <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
                 <DialogTitle sx={{ fontWeight: 'bold', color: 'error.main' }}>Confirm Deletion</DialogTitle>
                 <DialogContent dividers>
@@ -261,9 +258,8 @@ export default function UsersPage() {
                 </DialogActions>
             </Dialog>
 
-            {/* Snackbar */}
             <Snackbar open={snackbar.open} autoHideDuration={6000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-                <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%', fontWeight: 500, boxShadow: 3, borderRadius: 2, letterSpacing: 0.3 }}>
+                <Alert onClose={handleCloseSnackbar} severity={snackbar.severity} sx={{ width: '100%', fontWeight: 500 }}>
                     {snackbar.message}
                 </Alert>
             </Snackbar>

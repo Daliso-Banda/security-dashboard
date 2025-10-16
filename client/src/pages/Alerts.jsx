@@ -12,18 +12,17 @@ const fadeIn = keyframes`
 `;
 
 const AlertBox = styled(Box)(({ theme }) => ({
-  backgroundColor: '#fff3f3',
-  borderRadius: 10,
+  backgroundColor: '#1b2234',
+  borderRadius: 12,
   padding: theme.spacing(2.5),
-  boxShadow: '0 4px 10px rgba(195, 57, 43, 0.15)',
+  border: '1px solid rgba(255,255,255,0.06)',
+  boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
   cursor: 'default',
   animation: `${fadeIn} 0.4s ease forwards`,
   display: 'flex',
   flexDirection: 'column',
   transition: 'box-shadow 0.3s ease',
-  '&:hover': {
-    boxShadow: '0 8px 20px rgba(195, 57, 43, 0.3)',
-  },
+  '&:hover': { boxShadow: '0 10px 30px rgba(0,0,0,0.55)' },
 }));
 
 const SeverityDot = styled('span')(({ severity = 'high', theme }) => ({
@@ -63,19 +62,19 @@ export default function FetchAlerts() {
   }, []);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#fafafa', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 3 }}>
       <Paper elevation={8} sx={{
         width: { xs: '95%', sm: 520, md: 620, lg: 720 },
         maxHeight: '80vh',
         overflowY: 'auto',
-        borderRadius: 5,
+        borderRadius: 4,
         p: 4,
-        boxShadow: '0 12px 36px rgba(0,0,0,0.12)',
+        boxShadow: '0 12px 36px rgba(0,0,0,0.45)',
         '&::-webkit-scrollbar': { width: 8 },
-        '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(195, 57, 43, 0.4)', borderRadius: 4 },
-        '&::-webkit-scrollbar-track': { backgroundColor: '#f0f0f0' },
+        '&::-webkit-scrollbar-thumb': { backgroundColor: 'rgba(255,255,255,0.25)', borderRadius: 4 },
+        '&::-webkit-scrollbar-track': { backgroundColor: 'rgba(255,255,255,0.06)' },
       }}>
-        <Typography variant="h4" color="#b8322e" fontWeight={800} gutterBottom sx={{ mb: 4, userSelect: 'none', display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Typography variant="h4" color="error.light" fontWeight={800} gutterBottom sx={{ mb: 4, userSelect: 'none', display: 'flex', alignItems: 'center', gap: 1 }}>
           <NotificationsActiveIcon fontSize="large" /> Security Alerts
         </Typography>
         {alerts.length === 0 ? (

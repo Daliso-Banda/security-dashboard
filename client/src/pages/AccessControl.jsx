@@ -128,7 +128,7 @@ export default function AccessControl() {
     <Box
       sx={{
         minHeight: "100vh",
-        bgcolor: "#f4f6f9",
+        bgcolor: "background.default",
         py: 6,
         px: 3,
         display: "flex",
@@ -142,7 +142,7 @@ export default function AccessControl() {
             fontWeight: 700,
             textAlign: "center",
             mb: 5,
-            color: "#2c3e50",
+          color: "text.primary",
           }}
         >
           Access Control

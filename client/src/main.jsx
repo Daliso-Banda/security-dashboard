@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import theme from './theme';
 import MainLayout from './layout/MainLayout.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Alerts from './pages/Alerts.jsx';
@@ -37,20 +39,23 @@ class ErrorBoundary extends Component {
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <ErrorBoundary>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<MainLayout />}>
-            <Route index element={<Dashboard />} />
-            <Route path="alerts" element={<Alerts />} />
-            <Route path="access" element={<AccessControl />} />
-            <Route path="logs" element={<Logs />} />
-            <Route path="registration" element={<FaceRegistration />} />
-            <Route path="users" element={<UsersPage />} />
-            <Route path="live" element={<LiveStream />} /> {/* ✅ LiveStream route */}
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </ErrorBoundary>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <ErrorBoundary>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<MainLayout />}>
+              <Route index element={<Dashboard />} />
+              <Route path="alerts" element={<Alerts />} />
+              <Route path="access" element={<AccessControl />} />
+              <Route path="logs" element={<Logs />} />
+              <Route path="registration" element={<FaceRegistration />} />
+              <Route path="users" element={<UsersPage />} />
+              <Route path="live" element={<LiveStream />} /> {/* ✅ LiveStream route */}
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </ErrorBoundary>
+    </ThemeProvider>
   </React.StrictMode>,
 );

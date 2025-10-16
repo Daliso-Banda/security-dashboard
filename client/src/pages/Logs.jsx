@@ -78,7 +78,7 @@ export default function Logs() {
     <Box
       sx={{
         minHeight: '100vh',
-        bgcolor: '#f0f2f5',
+        bgcolor: 'background.default',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -99,7 +99,7 @@ export default function Logs() {
           <Typography
             variant="h4"
             gutterBottom
-            sx={{ fontWeight: 700, color: '#34495e', mb: 4, textAlign: 'center' }}
+            sx={{ fontWeight: 800, color: 'text.primary', mb: 4, textAlign: 'center' }}
           >
             Security Activity Logs
           </Typography>
@@ -116,14 +116,14 @@ export default function Logs() {
             </Fade>
           ) : (
             <Fade in={true}>
-              <TableContainer sx={{ maxHeight: 600, borderRadius: 2, boxShadow: '0 3px 12px rgba(0,0,0,0.05)' }}>
+              <TableContainer sx={{ maxHeight: 600, borderRadius: 2, boxShadow: '0 12px 36px rgba(0,0,0,0.45)' }}>
                 <Table stickyHeader aria-label="logs table">
                   <TableHead>
-                    <TableRow sx={{ bgcolor: 'linear-gradient(90deg, #6c5ce7, #00b894)', color: '#fff' }}>
+                    <TableRow sx={{ bgcolor: 'transparent', color: '#fff' }}>
                       {['Message', 'Device', 'Severity', 'Timestamp', 'Image'].map((head) => (
                         <TableCell
                           key={head}
-                          sx={{ color: '#fff', fontWeight: 700, fontSize: 14 }}
+                          sx={{ color: 'text.secondary', fontWeight: 700, fontSize: 14 }}
                         >
                           {head}
                         </TableCell>
@@ -151,9 +151,9 @@ export default function Logs() {
                             onClick={() => handleRowClick(log)}
                             sx={{
                               cursor: 'pointer',
-                              backgroundColor: index % 2 === 0 ? '#fafafa' : '#fff',
+                              backgroundColor: index % 2 === 0 ? 'rgba(255,255,255,0.02)' : 'rgba(255,255,255,0.04)',
                               transition: 'all 0.3s ease',
-                              '&:hover': { backgroundColor: '#e9f1ff' },
+                              '&:hover': { backgroundColor: 'rgba(144,202,249,0.12)' },
                             }}
                           >
                             <TableCell>{messageText}</TableCell>
@@ -180,8 +180,8 @@ export default function Logs() {
                                     height: 80,
                                     objectFit: 'cover',
                                     borderRadius: 2,
-                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                                    border: '1px solid #ccc',
+                                    boxShadow: '0 2px 12px rgba(0,0,0,0.5)',
+                                    border: '1px solid rgba(255,255,255,0.06)',
                                   }}
                                 />
                               ) : (

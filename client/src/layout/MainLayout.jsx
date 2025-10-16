@@ -28,7 +28,8 @@ import FaceRetouchingNaturalIcon from "@mui/icons-material/FaceRetouchingNatural
 import VideocamIcon from "@mui/icons-material/Videocam";
 import MenuIcon from "@mui/icons-material/Menu";
 
-const drawerWidth = 240;
+const drawerWidth = 264;
+const collapsedWidth = 72;
 
 const menuItems = [
   { text: "Dashboard", path: "/", icon: <DashboardIcon /> },
@@ -42,6 +43,7 @@ const menuItems = [
 export default function MainLayout() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [hoverOpen, setHoverOpen] = React.useState(false); // mini-variant hover
   const [anchorEl, setAnchorEl] = React.useState(null);
 
   const handleDrawerToggle = () => {
@@ -60,34 +62,40 @@ export default function MainLayout() {
   const drawer = (
     <div>
       <Toolbar />
-      <Box sx={{ textAlign: "center", py: 2 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 600, color: "text.secondary" }}>
-          Navigation
-        </Typography>
-      </Box>
+      {hoverOpen && (
+        <Box sx={{ textAlign: "left", px: 3, py: 2 }}>
+          <Typography variant="overline" sx={{ fontWeight: 700, letterSpacing: 1.2, color: "text.secondary" }}>
+            MENU
+          </Typography>
+        </Box>
+      )}
       <Divider />
-      <List>
+      <List sx={{ px: hoverOpen ? 1 : 0 }}>
         {menuItems.map((item, index) => {
           const isActive = location.pathname === item.path;
           return (
-            <ListItem key={index} disablePadding>
+            <ListItem key={index} disablePadding sx={{ mb: 0.5, justifyContent: hoverOpen ? 'initial' : 'center' }}>
               <ListItemButton
                 component={Link}
                 to={item.path}
                 sx={{
-                  px: 3,
-                  py: 1.8,
-                  color: isActive ? "#1565c0" : "text.primary",
-                  bgcolor: isActive ? "rgba(21, 101, 192, 0.1)" : "transparent",
-                  "&:hover": {
-                    bgcolor: "rgba(21, 101, 192, 0.08)",
-                  },
+                  px: hoverOpen ? 2.5 : 1.5,
+                  py: 1.4,
+                  borderRadius: 2,
+                  mx: hoverOpen ? 1 : 0.5,
+                  color: isActive ? "primary.main" : "text.primary",
+                  bgcolor: isActive ? "rgba(21, 101, 192, 0.10)" : "transparent",
+                  boxShadow: isActive ? 2 : 'none',
+                  transition: 'all .2s ease',
+                  '&:hover': { bgcolor: "rgba(21, 101, 192, 0.08)" },
                 }}
               >
-                <ListItemIcon sx={{ color: isActive ? "#1565c0" : "text.secondary" }}>
+                <ListItemIcon sx={{ color: isActive ? "primary.main" : "text.secondary", minWidth: hoverOpen ? 36 : 0, justifyContent: 'center' }}>
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: "0.95rem" }} />
+                {hoverOpen && (
+                  <ListItemText primary={item.text} primaryTypographyProps={{ fontSize: "0.95rem", fontWeight: isActive ? 700 : 500 }} />
+                )}
               </ListItemButton>
             </ListItem>
           );
@@ -101,13 +109,13 @@ export default function MainLayout() {
       <CssBaseline />
 
       {/* Top Bar */}
-      <AppBar
-        position="fixed"
-        sx={{
-          zIndex: (theme) => theme.zIndex.drawer + 1,
-          bgcolor: "#1565c0",
-        }}
-      >
+      <AppBar position="fixed" color="inherit" elevation={0} sx={{
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        borderBottom: '1px solid rgba(255,255,255,0.06)',
+        bgcolor: 'background.paper',
+        ml: { sm: hoverOpen ? `${drawerWidth}px` : `${collapsedWidth}px` },
+        width: { sm: `calc(100% - ${hoverOpen ? drawerWidth : collapsedWidth}px)` }
+      }}>
         <Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
           {/* Left section */}
           <Box sx={{ display: "flex", alignItems: "center" }}>
@@ -119,8 +127,8 @@ export default function MainLayout() {
             >
               <MenuIcon />
             </IconButton>
-            <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 500 }}>
-              Security Control Dashboard
+            <Typography variant="h6" noWrap component="div" sx={{ fontWeight: 800 }}>
+              Security Dashboard
             </Typography>
           </Box>
 
@@ -160,15 +168,18 @@ export default function MainLayout() {
       <Drawer
         variant="permanent"
         sx={{
-          width: drawerWidth,
+          width: { sm: hoverOpen ? drawerWidth : collapsedWidth },
           flexShrink: 0,
           [`& .MuiDrawer-paper`]: {
-            width: drawerWidth,
+            width: { sm: hoverOpen ? drawerWidth : collapsedWidth },
             boxSizing: "border-box",
+            borderRight: '1px solid rgba(255,255,255,0.06)'
           },
           display: { xs: "none", sm: "block" },
         }}
         open
+        onMouseEnter={() => setHoverOpen(true)}
+        onMouseLeave={() => setHoverOpen(false)}
       >
         {drawer}
       </Drawer>
@@ -193,15 +204,12 @@ export default function MainLayout() {
       </Drawer>
 
       {/* Main Content */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          p: 3,
-          ml: { sm: `${drawerWidth}px` },
-          backgroundColor: "#f9f9f9",
-        }}
-      >
+      <Box component="main" sx={{
+        flexGrow: 1,
+        p: 3,
+        ml: { sm: hoverOpen ? `${drawerWidth}px` : `${collapsedWidth}px` },
+        backgroundColor: 'background.default'
+      }}>
         <Toolbar />
         <Outlet />
       </Box>

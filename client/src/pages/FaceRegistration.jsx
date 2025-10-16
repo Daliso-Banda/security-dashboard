@@ -136,7 +136,7 @@ export default function RegisterUser() {
   };
 
   return (
-    <Box sx={{ backgroundColor: "#f0f2f5", minHeight: "100vh", py: 6, px: 2 }}>
+    <Box sx={{ backgroundColor: "background.default", minHeight: "100vh", py: 6, px: 2 }}>
       <Fade in={fadeIn} timeout={800}>
         <Paper
           elevation={6}
@@ -144,13 +144,12 @@ export default function RegisterUser() {
             maxWidth: 720,
             mx: "auto",
             p: { xs: 3, md: 5 },
-            borderRadius: 4,
-            boxShadow: "0 6px 25px rgba(0,0,0,0.1)",
-            backgroundColor: "#fff",
+            borderRadius: 3,
+            boxShadow: "0 12px 36px rgba(0,0,0,0.5)",
           }}
         >
-          <Typography variant="h4" fontWeight={700} gutterBottom textAlign="center">
-            👤 New User Registration
+          <Typography variant="h4" fontWeight={800} gutterBottom textAlign="center">
+            New User Registration
           </Typography>
           <Typography variant="body1" color="text.secondary" mb={4} textAlign="center">
             Capture user details and face for secure registration.
@@ -221,7 +220,7 @@ export default function RegisterUser() {
                   sx={{ mt: 3, px: 4 }}
                   onClick={handleCapture}
                 >
-                  📸 Capture Photo
+                  Capture Photo
                 </Button>
               </Box>
             )}
@@ -229,7 +228,7 @@ export default function RegisterUser() {
             {progressLog.length > 0 && (
               <Paper elevation={3} sx={{ maxHeight: 250, overflowY: "auto", p: 3, borderRadius: 3 }}>
                 <Typography variant="subtitle1" fontWeight={600} mb={1}>
-                  📋 Registration Progress:
+                  Registration Progress
                 </Typography>
                 <List dense>
                   {progressLog.map((msg, index) => (
